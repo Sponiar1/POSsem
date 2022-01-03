@@ -7,31 +7,134 @@
 #include <unistd.h>
 #include <pthread.h>
 
+int login(char meno[], char heslo[]) {
+    int found;
+    found = 0;
+    FILE *f;
+    f = fopen("/tmp/PosSemTest/login.txt", "r");
+    char fileMeno[50];
+    char fileHeslo[50];
+    bzero(fileMeno, 50);
+    bzero(fileHeslo, 50);
+    meno[strcspn(meno, "\n")] = 0;
+    heslo[strcspn(heslo, "\n")] = 0;
+    while(!feof(f)) {
+        fscanf(f, "%s", fileMeno);
+        printf("%s \n", fileMeno);
+        fscanf(f, "%s", fileHeslo);
+        printf("%s \n", fileHeslo);
+        if (strncmp(fileMeno, meno, strlen(meno)) == 0 && (strncmp(fileHeslo, heslo, strlen(heslo))) == 0) {
+            found = 1;
+            printf("Našiel som");
+            break;
+        }
+    }
+
+    fclose(f);
+    return found;
+}
+
+int checkName(char meno[]) {
+    int found;
+    found = 0;
+    FILE *f;
+    f = fopen("/tmp/PosSemTest/login.txt", "r");
+    char fileMeno[50];
+    char fileHeslo[50];
+    bzero(fileMeno, 50);
+    bzero(fileHeslo, 50);
+    meno[strcspn(meno, "\n")] = 0;
+    while(!feof(f)) {
+        fscanf(f, "%s", fileMeno);
+        printf("%s \n", fileMeno);
+        fscanf(f, "%s", fileHeslo);
+        printf("%s \n", fileHeslo);
+        if (strncmp(fileMeno, meno, strlen(meno)) == 0) {
+            found = 1;
+            printf("Našiel som");
+            break;
+        }
+    }
+    fclose(f);
+    return found;
+}
+
+void addUser(char meno[], char heslo[]) {
+    FILE *f;
+    f = fopen("/tmp/PosSemTest/login.txt", "a");
+    fprintf(f, "%s %s%c", meno, heslo, "\n");
+    fclose(f);
+}
+
 void *userInteraction(int newsockfd) {
     int n;
     char buffer[256];
     char vyzva[50];
-
-    bzero(vyzva, 50);
-    strcpy(vyzva, "Meno: ");
-    n = write(newsockfd, vyzva, strlen(vyzva) + 1);
-    n = read(newsockfd, buffer, 255);
-    char meno[50];
-    bzero(meno, 50);
-    strcpy(meno, buffer);
-    printf("%s \n", meno);
-    int a = 10;
     bzero(buffer, 256);
-    bzero(vyzva, 50);
-    strcpy(vyzva, "Heslo: ");
-    n = write(newsockfd, vyzva, strlen(vyzva) + 1);
-    n = read(newsockfd, buffer, 255);
-    char heslo[50];
-    bzero(heslo, 50);
-    strcpy(heslo, buffer);
-    printf("%s \n", heslo);
     int logged = 0;
-    logged = login(meno, heslo);
+
+
+    while (logged == 0) {
+        n = read(newsockfd, buffer, 255);
+        if (strncmp("1", buffer, 1) == 0) {
+            bzero(vyzva, 50);
+            strcpy(vyzva, "Meno: ");
+            n = write(newsockfd, vyzva, strlen(vyzva) + 1);
+            n = read(newsockfd, buffer, 255);
+            char meno[50];
+            bzero(meno, 50);
+            strcpy(meno, buffer);
+            printf("%s \n", meno);
+            bzero(buffer, 256);
+            bzero(vyzva, 50);
+            strcpy(vyzva, "Heslo: ");
+            n = write(newsockfd, vyzva, strlen(vyzva) + 1);
+            n = read(newsockfd, buffer, 255);
+            char heslo[50];
+            bzero(heslo, 50);
+            strcpy(heslo, buffer);
+            printf("%s \n", heslo);
+            logged = login(meno, heslo);
+            if (logged == 0) {
+                strcpy(vyzva, "Uzivatel nenajdeny: ");
+                n = write(newsockfd, vyzva, strlen(vyzva) + 1);
+            } else {
+                strcpy(vyzva, "Vitaj ");
+                strcat(vyzva, meno);
+                n = write(newsockfd, vyzva, strlen(vyzva) + 1);
+            }
+        } else if (strncmp("2", buffer, 1) == 0) {
+            bzero(vyzva, 50);
+            strcpy(vyzva, "Zadajte meno: ");
+            n = write(newsockfd, vyzva, strlen(vyzva) + 1);
+            n = read(newsockfd, buffer, 255);
+            char meno[50];
+            bzero(meno, 50);
+            strcpy(meno, buffer);
+            printf("%s \n", meno);
+            int a = 10;
+            bzero(buffer, 256);
+            bzero(vyzva, 50);
+            strcpy(vyzva, "Zadajte heslo: ");
+            n = write(newsockfd, vyzva, strlen(vyzva) + 1);
+            n = read(newsockfd, buffer, 255);
+            char heslo[50];
+            bzero(heslo, 50);
+            strcpy(heslo, buffer);
+            printf("%s \n", heslo);
+            if (checkName(meno) == 0) {
+                addUser(meno, heslo);
+                logged = login(meno, heslo);
+                strcpy(vyzva, "Vitaj ");
+                strcat(vyzva, meno);
+                n = write(newsockfd, vyzva, strlen(vyzva) + 1);
+            } else {
+                strcpy(vyzva, "Uzivatel s takým meno už existuje :(");
+                n = write(newsockfd, vyzva, strlen(vyzva) + 1);
+            }
+        }
+    }
+
     while (logged==1) {
         bzero(buffer, 256);
         n = read(newsockfd, buffer, 255);
@@ -40,7 +143,7 @@ void *userInteraction(int newsockfd) {
             return 4;
         }
 
-        printf("Here is the message: %s\n", buffer);
+        //printf("Here is the message: %s\n", buffer);
         if (strncmp("end", buffer, 3) == 0) {
             break;
         }
@@ -106,32 +209,6 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-int login(char meno[], char heslo[]) {
-    int found;
-    found = 0;
-    FILE *f;
-    f = fopen("/tmp/PosSemTest2/login.txt", "r");
-    char fileMeno[50];
-    char fileHeslo[50];
-    bzero(fileMeno, 50);
-    bzero(fileHeslo, 50);
-    meno[strcspn(meno, "\n")] = 0;
-    heslo[strcspn(heslo, "\n")] = 0;
-    while(!feof(f)) {
-        fscanf(f, "%s", fileMeno);
-        printf("%s \n", fileMeno);
-        fscanf(f, "%s", fileHeslo);
-        printf("%s \n", fileHeslo);
-        if (strncmp(fileMeno, meno, strlen(meno)) == 0 && (strncmp(fileHeslo, heslo, strlen(heslo))) == 0) {
-            found = 1;
-            printf("Našiel som");
-            break;
-        }
-    }
-
-    fclose(f);
-    return found;
-}
 
 /*
         for (int i = 0; buffer[i] != '\0'; ++i) {

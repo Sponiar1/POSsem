@@ -9,7 +9,7 @@
 
 int main(int argc, char *argv[])
 {
-    int sockfd, n;
+    int sockfd, n, logged;
     struct sockaddr_in serv_addr;
     struct hostent* server;
 
@@ -50,17 +50,48 @@ int main(int argc, char *argv[])
         return 4;
     }
 
-    bzero(buffer, 256);
-    n = read(sockfd, buffer, 255);
-    printf("%s", buffer);
-    fgets(buffer, 255, stdin);
-    n = write(sockfd, buffer, strlen(buffer));
 
-    bzero(buffer, 256);
-    n = read(sockfd, buffer, 255);
-    printf("%s", buffer);
-    fgets(buffer, 255, stdin);
-    n = write(sockfd, buffer, strlen(buffer));
+
+    while (logged == 0) {
+        printf("Vitajte zvolte akciu: \n");
+        printf("Prihlasit sa - 1\n");
+        printf("Registrovat sa - 2\n");
+        fgets(buffer, 255, stdin);
+        n = write(sockfd, buffer, strlen(buffer));
+
+        if (strncmp("1", buffer, 1) == 0) {
+            bzero(buffer, 256);
+            n = read(sockfd, buffer, 255);
+            printf("%s", buffer);
+            fgets(buffer, 255, stdin);
+            n = write(sockfd, buffer, strlen(buffer));
+
+            bzero(buffer, 256);
+            n = read(sockfd, buffer, 255);
+            printf("%s", buffer);
+            fgets(buffer, 255, stdin);
+            n = write(sockfd, buffer, strlen(buffer));
+            n = read(sockfd, buffer, 255);
+        }
+        if (strncmp("2", buffer, 1) == 0) {
+            bzero(buffer, 256);
+            n = read(sockfd, buffer, 255);
+            printf("%s", buffer);
+            fgets(buffer, 255, stdin);
+            n = write(sockfd, buffer, strlen(buffer));
+
+            bzero(buffer, 256);
+            n = read(sockfd, buffer, 255);
+            printf("%s", buffer);
+            fgets(buffer, 255, stdin);
+            n = write(sockfd, buffer, strlen(buffer));
+            n = read(sockfd, buffer, 255);
+        }
+        printf("%s", buffer);
+        if(strncmp("V", buffer, 1) == 0) {
+            logged = 1;
+        }
+    }
 
     while (1==1) {
         printf("Please enter a message: ");
