@@ -61,8 +61,37 @@ int checkName(char meno[]) {
 
 void addUser(char meno[], char heslo[]) {
     FILE *f;
-    f = fopen("/tmp/PosSemTest/login.txt", "a");
+    f = fopen("/tmp/PosSemTest2/login.txt", "a");
     fprintf(f, "%s %s%c", meno, heslo, "\n");
+    fclose(f);
+}
+
+void getContacts(char meno[], int newsockfd) {
+    FILE *f;
+    int n;
+    f = fopen("/tmp/PosSemTest2/contacts.txt", "r");
+    char fileMeno[50];
+    bzero(fileMeno, 50);
+    char trash[1024];
+    meno[strcspn(meno, "\n")] = 0;
+    while(!feof(f)) {
+        fscanf(f, "%s", fileMeno);
+        if (strncmp(fileMeno, meno, strlen(meno)) == 0) {
+            printf("Našiel som");
+            while (1==1) {
+                fscanf(f, "%s", fileMeno);
+                if (strncmp(fileMeno, "X", 1) != 0) {
+                    n = write(newsockfd, fileMeno, strlen(fileMeno) + 1);
+                } else {
+                    strcpy(fileMeno, "Done");
+                    n = write(newsockfd, fileMeno, strlen(fileMeno) + 1);
+                    break;
+                }
+            }
+            break;
+        }
+        fgets(trash, 1024, f);
+    }
     fclose(f);
 }
 
@@ -72,8 +101,10 @@ void *userInteraction(int newsockfd) {
     char vyzva[50];
     bzero(buffer, 256);
     int logged = 0;
+    int action = 0;
+    char username[50];
 
-
+    //login/register
     while (logged == 0) {
         n = read(newsockfd, buffer, 255);
         if (strncmp("1", buffer, 1) == 0) {
@@ -84,6 +115,7 @@ void *userInteraction(int newsockfd) {
             char meno[50];
             bzero(meno, 50);
             strcpy(meno, buffer);
+            strcpy(username, buffer);
             printf("%s \n", meno);
             bzero(buffer, 256);
             bzero(vyzva, 50);
@@ -111,6 +143,7 @@ void *userInteraction(int newsockfd) {
             char meno[50];
             bzero(meno, 50);
             strcpy(meno, buffer);
+            strcpy(username, buffer);
             printf("%s \n", meno);
             int a = 10;
             bzero(buffer, 256);
@@ -142,17 +175,29 @@ void *userInteraction(int newsockfd) {
             perror("Error reading from socket");
             return 4;
         }
+        action = atoi(buffer);
+        switch (action) {
+            case 1:
+            //printf("Here is the message: %s\n", buffer);
+            while (1==1) {
+                n = read(newsockfd, buffer, 255);
+                if (strncmp("end", buffer, 3) == 0) {
+                    break;
+                }
+                const char *msg = "I got your message";
+                n = write(newsockfd, msg, strlen(msg) + 1);
 
-        //printf("Here is the message: %s\n", buffer);
-        if (strncmp("end", buffer, 3) == 0) {
+                if (n < 0) {
+                    perror("Error writing to socket");
+                    return 5;
+                }
+            }
             break;
-        }
-        const char *msg = "I got your message";
-        n = write(newsockfd, msg, strlen(msg) + 1);
-
-        if (n < 0) {
-            perror("Error writing to socket");
-            return 5;
+            case 2:
+                getContacts(username, newsockfd);
+                break;
+            default:
+                break;
         }
     }
     close(newsockfd);

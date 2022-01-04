@@ -7,6 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 
+
 int main(int argc, char *argv[])
 {
     int sockfd, n, logged;
@@ -14,6 +15,7 @@ int main(int argc, char *argv[])
     struct hostent* server;
 
     char buffer[256];
+    char name[50];
 
     if (argc < 3)
     {
@@ -65,6 +67,8 @@ int main(int argc, char *argv[])
             printf("%s", buffer);
             fgets(buffer, 255, stdin);
             n = write(sockfd, buffer, strlen(buffer));
+            bzero(name, 50);
+            strcpy(name, buffer);
 
             bzero(buffer, 256);
             n = read(sockfd, buffer, 255);
@@ -90,32 +94,67 @@ int main(int argc, char *argv[])
         printf("%s", buffer);
         if(strncmp("V", buffer, 1) == 0) {
             logged = 1;
+            printf("\n");
         }
     }
 
-    while (1==1) {
-        printf("Please enter a message: ");
+    while (logged==1) {
+        printf("Zvolte akciu: \n");
+        printf("1 - Free writing: \n");
+        printf("2 - Kontakty: \n");
+        printf("3 - Zvolte akciu: \n");
+        printf("4 - Vypnut \n");
         bzero(buffer, 256);
         fgets(buffer, 255, stdin);
-
+        int menu = 1;
+        menu = atoi(buffer);
+        //printf("%d", menu);
         n = write(sockfd, buffer, strlen(buffer));
-        if (n < 0) {
-            perror("Error writing to socket");
-            return 5;
-        }
+        switch (menu){
+            case 1:
+                while (1==1) {
+                    printf("Please enter a message: ");
+                    bzero(buffer, 256);
+                    fgets(buffer, 255, stdin);
 
-        if(strncmp("end", buffer, 3) == 0) {
+                    n = write(sockfd, buffer, strlen(buffer));
+                    if (n < 0) {
+                        perror("Error writing to socket");
+                        return 5;
+                    }
+
+                    if (strncmp("end", buffer, 3) == 0) {
+                        break;
+                    }
+
+                    bzero(buffer, 256);
+                    n = read(sockfd, buffer, 255);
+                    if (n < 0) {
+                        perror("Error reading from socket");
+                        return 6;
+                    }
+
+                    printf("%s\n", buffer);
+                }
+                break;
+            case 2:
+                //printf("Vybral som kontakty");
+                while (1==1) {
+                    n = read(sockfd, buffer, 255);
+                    if (strncmp("Done", buffer, 4)==0) {
+                        printf("idem preč z whilu");
+                        break;
+                    }
+                    printf("%s\n", buffer);
+                }
+                break;
+            default:
+                break;
+        }
+        if(menu == 4) {
             break;
         }
 
-        bzero(buffer, 256);
-        n = read(sockfd, buffer, 255);
-        if (n < 0) {
-            perror("Error reading from socket");
-            return 6;
-        }
-
-        printf("%s\n", buffer);
 
     }
     close(sockfd);
