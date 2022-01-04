@@ -7,13 +7,12 @@
 #include <string.h>
 #include <unistd.h>
 
-
 int main(int argc, char *argv[])
 {
     int sockfd, n, logged;
     struct sockaddr_in serv_addr;
     struct hostent* server;
-
+    int on = 1;
     char buffer[256];
     char name[50];
 
@@ -53,7 +52,7 @@ int main(int argc, char *argv[])
     }
 
 
-
+    while (on==1) {
     while (logged == 0) {
         printf("Vitajte zvolte akciu: \n");
         printf("Prihlasit sa - 1\n");
@@ -104,15 +103,17 @@ int main(int argc, char *argv[])
         printf("2 - Kontakty: \n");
         printf("3 - Zvolte akciu: \n");
         printf("4 - Vypnut \n");
+        printf("5 - Odhlasit \n");
+        printf("6 - Zrusit ucet \n");
         bzero(buffer, 256);
         fgets(buffer, 255, stdin);
         int menu = 1;
         menu = atoi(buffer);
         //printf("%d", menu);
         n = write(sockfd, buffer, strlen(buffer));
-        switch (menu){
+        switch (menu) {
             case 1:
-                while (1==1) {
+                while (1 == 1) {
                     printf("Please enter a message: ");
                     bzero(buffer, 256);
                     fgets(buffer, 255, stdin);
@@ -139,23 +140,31 @@ int main(int argc, char *argv[])
                 break;
             case 2:
                 //printf("Vybral som kontakty");
-                while (1==1) {
+                while (1 == 1) {
                     n = read(sockfd, buffer, 255);
-                    if (strncmp("Done", buffer, 4)==0) {
-                        printf("idem preč z whilu");
+                    if (strncmp("Done", buffer, 4) == 0) {
+                        //printf("idem preč z whilu");
                         break;
                     }
                     printf("%s\n", buffer);
                 }
                 break;
+            case 4:
+                logged = 0;
+                on = 0;
+                break;
+            case 5:
+                logged = 0;
+                break;
+            case 6:
+                printf("vyfilovane");
+                logged = 0;
+                break;
             default:
                 break;
         }
-        if(menu == 4) {
-            break;
-        }
 
-
+    }
     }
     close(sockfd);
 
