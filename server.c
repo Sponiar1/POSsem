@@ -71,7 +71,7 @@ void addUser(char meno[], char heslo[]) {
     fclose(f);
 
 }
-
+//zmena
 void removeUser(char meno[]) {
     FILE *f, *n;
     f = fopen("/tmp/PosSemTest/login.txt", "r");
