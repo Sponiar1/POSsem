@@ -71,7 +71,7 @@ void addUser(char meno[], char heslo[]) {
     fclose(f);
 
 }
-//zmena
+
 void removeUser(char meno[]) {
     FILE *f, *n;
     f = fopen("/tmp/PosSemTest/login.txt", "r");
@@ -159,10 +159,78 @@ void getContacts(char meno[], int newsockfd) {
     fclose(f);
 }
 
+int findContact(char meno[], char kontaktovany[]) {
+    FILE *f;
+    int found = 2;
+    f = fopen("/tmp/PosSemTest/contacts.txt", "r");
+    char fileMeno[50];
+    bzero(fileMeno, 50);
+    char trash[1024];
+    meno[strcspn(meno, "\n")] = 0;
+    kontaktovany[strcspn(kontaktovany, "\n")] = 0;
+    while(!feof(f)) {
+        fscanf(f, "%s", fileMeno);
+        if (strncmp(fileMeno, meno, strlen(meno)) == 0) {
+            printf("Našiel som usera");
+            while (1==1) {
+                bzero(fileMeno, 50);
+                fscanf(f, "%s", fileMeno);
+                if (strncmp(fileMeno, kontaktovany, 50) == 0) {
+                    found = 1;
+                    break;
+                } else if (strncmp(fileMeno, "X", 1) == 0){
+                    found = 0;
+                    break;
+                }
+            }
+            break;
+        }
+        fgets(trash, 1024, f);
+    }
+    fclose(f);
+    return found;
+}
+
+void sendFriendRequest(char meno[], char kontaktovany[]) {
+    FILE *f, *n;
+    char kontakty[1024];
+    bzero(kontakty, 1024);
+    char fileMeno[50];
+    bzero(fileMeno, 50);
+    char trash[1024];
+    meno[strcspn(meno, "\n")] = 0;
+    kontaktovany[strcspn(kontaktovany, "\n")] = 0;
+
+    f = fopen("/tmp/PosSemTest/contacts.txt", "r");
+    n = fopen("/tmp/PosSemTest/contactsnew.txt", "w+");
+    while(!feof(f)) {
+        bzero(fileMeno, 50);
+        bzero(kontakty, 1024);
+        fscanf(f, "%s", fileMeno);
+        if (strncmp(fileMeno, "0", 1) == 0) {
+            break;
+        }
+        if (strncmp(fileMeno, meno, strlen(meno)) == 0) {
+            printf("Našiel som usera");
+                strcat(kontaktovany, "#");
+                fgets(kontakty, 1024, f);
+                fprintf(n, "%s %s %s", fileMeno, kontaktovany, kontakty);
+        } else {
+            fgets(kontakty, 1024, f);
+            fprintf(n, "%s %s", fileMeno, kontakty);
+        }
+    }
+    fclose(f);
+    fclose(n);
+    remove("/tmp/PosSemTest/contacts.txt");
+    rename("/tmp/PosSemTest/contactsnew.txt", "/tmp/PosSemTest/contacts.txt");
+}
+
 void *userInteraction(int newsockfd) {
     int n;
     char buffer[256];
     char vyzva[50];
+    char search[50];
     bzero(buffer, 256);
     int logged = 0;
     int action = 0;
@@ -261,15 +329,30 @@ void *userInteraction(int newsockfd) {
                 case 2:
                     getContacts(username, newsockfd);
                     break;
+                case 3:
+                    n = read(newsockfd, buffer, 255);
+                    strcpy(search, buffer);
+                    if (findContact(username, search) == 1) {
+                        strcpy(buffer,"Uzivatel uz je v kontaktoch\n");
+                        n = write(newsockfd, buffer, strlen(buffer));
+                    } else {
+                        sendFriendRequest(username, search);
+                        strcpy(buffer,"Uzivatelovi bola poslana ziadost\n");
+                        n = write(newsockfd, buffer, strlen(buffer));
+                    }
+                    break;
                 case 4:
-                    logged = 0;
-                    on = 0;
+                    break;
                 case 5:
                     logged = 0;
                     break;
                 case 6:
                     removeUser(username);
                     logged = 0;
+                    break;
+                case 7:
+                    logged = 0;
+                    on = 0;
                     break;
                 default:
                     break;
@@ -286,7 +369,12 @@ int main(int argc, char *argv[])
     struct sockaddr_in serv_addr, cli_addr;
     int n;
     char buffer[256];
-
+/*
+    char kkk[200];
+    strcpy(kkk,"JanoX");
+    kkk[strcspn(kkk, "X")] = 0;
+    strcat(kkk, " je nepotvrdeny");
+    printf("%s", kkk);*/
     if (argc < 2)
     {
         fprintf(stderr,"usage %s port\n", argv[0]);

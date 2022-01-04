@@ -101,10 +101,11 @@ int main(int argc, char *argv[])
         printf("Zvolte akciu: \n");
         printf("1 - Free writing: \n");
         printf("2 - Kontakty: \n");
-        printf("3 - Zvolte akciu: \n");
-        printf("4 - Vypnut \n");
+        printf("3 - Pridat novy kontakt: \n");
+        printf("4 - skontrolovat ziadosti o kontakt");
         printf("5 - Odhlasit \n");
         printf("6 - Zrusit ucet \n");
+        printf("7 - Vypnut \n");
         bzero(buffer, 256);
         fgets(buffer, 255, stdin);
         int menu = 1;
@@ -149,9 +150,15 @@ int main(int argc, char *argv[])
                     printf("%s\n", buffer);
                 }
                 break;
+            case 3:
+                printf("Chcem sa spojit s:");
+                fgets(buffer, 255, stdin);
+                n = write(sockfd, buffer, strlen(buffer));
+                usleep(5);
+                n = read(sockfd, buffer, 255);
+                printf("%s", buffer);
+                break;
             case 4:
-                logged = 0;
-                on = 0;
                 break;
             case 5:
                 logged = 0;
@@ -160,10 +167,13 @@ int main(int argc, char *argv[])
                 printf("vyfilovane");
                 logged = 0;
                 break;
+            case 7:
+                logged = 0;
+                on = 0;
+                break;
             default:
                 break;
         }
-//zemna
     }
     }
     close(sockfd);
