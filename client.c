@@ -7,6 +7,20 @@
 #include <string.h>
 #include <unistd.h>
 
+char* code(char message[]) {
+    for (int i = 0; message[i] != '\0'; ++i) {
+        message[i] += 5;
+    }
+    return message;
+}
+
+char* decode(char message[]) {
+    for (int i = 0; message[i] != '\0'; ++i) {
+        message[i] -= 5;
+    }
+    return message;
+}
+
 int main(int argc, char *argv[])
 {
     int sockfd, n, logged;
@@ -105,9 +119,11 @@ int main(int argc, char *argv[])
         printf("4 - Potvrdit ziadosti o kontakt\n");
         printf("5 - Odtranit kontakt\n");
         printf("6 - Notifications\n");
-        printf("7 - Odhlasit \n");
-        printf("8 - Zrusit ucet \n");
-        printf("9 - Vypnut \n");
+        printf("7 - Zobrazit spravy\n");
+        printf("8 - Odoslat spravu\n");
+        printf("9 - Odhlasit \n");
+        printf("10 - Zrusit ucet \n");
+        printf("11 - Vypnut \n");
         bzero(buffer, 256);
         fgets(buffer, 255, stdin);
         int menu = 1;
@@ -201,13 +217,59 @@ int main(int argc, char *argv[])
                 }
                 break;
             case 7:
-                logged = 0;
+                printf("Chcem si pozriet konverzaciu s : (0 = exit)\n");
+                while (1 == 1) {
+                    n = read(sockfd, buffer, 255);
+                    usleep(5);
+                    if (strncmp("Done", buffer, 4) == 0) {
+                        //printf("idem preč z whilu");
+                        break;
+                    }
+                    printf("%s\n", buffer);
+                }
+                bzero(buffer, 256);
+                fgets(buffer, 255, stdin);
+                n = write(sockfd, buffer, strlen(buffer));
+                while (1==1) {
+                    n = read(sockfd, buffer, 255);
+                    if(strncmp("Done", buffer, 4) == 0) {
+                        break;
+                    }
+                    printf("%s: ", buffer);
+                    usleep(5);
+                    n = read(sockfd, buffer, 255);
+                    usleep(5);
+                    printf("%s", buffer);
+                }
                 break;
             case 8:
+                printf("Chcem napisat spravu uzivatelovi: (0 = exit)\n");
+                while (1 == 1) {
+                    n = read(sockfd, buffer, 255);
+                    usleep(5);
+                    if (strncmp("Done", buffer, 4) == 0) {
+                        //printf("idem preč z whilu");
+                        break;
+                    }
+                    printf("%s\n", buffer);
+                }
+                bzero(buffer, 256);
+                fgets(buffer, 255, stdin);
+                n = write(sockfd, buffer, strlen(buffer));
+                if (strncmp("0", buffer, 1) != 0) {
+                    bzero(buffer, 256);
+                    fgets(buffer, 255, stdin);
+                    n = write(sockfd, buffer, strlen(buffer));
+                }
+                break;
+            case 9:
+                logged = 0;
+                break;
+            case 10:
                 printf("vyfilovane");
                 logged = 0;
                 break;
-            case 9:
+            case 11:
                 logged = 0;
                 on = 0;
                 break;

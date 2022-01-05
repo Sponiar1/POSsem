@@ -409,9 +409,66 @@ void removeFriend(char meno[], char kontaktovany[]) {
     sendNotification(kontaktovany, message);
 }
 
+void sendMessage(char meno[], char kontaktovany[], char message[]) {
+    kontaktovany[strcspn(kontaktovany, "\n")] = 0;
+    meno[strcspn(meno, "\n")] = 0;
+    FILE *f;
+    f = fopen("/tmp/PosSemTest/messages.txt", "a");
+    fprintf(f, "%s %s %s", kontaktovany, meno, message);
+    fclose(f);
+}
+
+void readMessages(char meno[], char kontaktovany[], int newsockfd) {
+    FILE *f;
+    int n;
+    f = fopen("/tmp/PosSemTest/messages.txt", "r");
+    char fileMeno[50];
+    char message[256];
+    meno[strcspn(meno, "\n")] = 0;
+    kontaktovany[strcspn(kontaktovany, "\n")] = 0;
+    while(!feof(f)) {
+        bzero(fileMeno, 50);
+        bzero(message, 256);
+        fscanf(f, "%s", fileMeno);
+        if (strncmp(fileMeno, meno, strlen(meno)) == 0) {
+            printf("Našiel som");
+                bzero(fileMeno, 50);
+                fscanf(f, "%s", fileMeno);
+                if (strncmp(fileMeno, kontaktovany, strlen(kontaktovany)) == 0) {
+                    fgets(message, 256, f);
+                    n = write(newsockfd, fileMeno, strlen(fileMeno) + 1);
+                    usleep(5);
+                    n = write(newsockfd, message, 255);
+                    usleep(5);
+                } else {
+                    fgets(message, 256, f);
+                }
+        } else if (strncmp(fileMeno, kontaktovany, strlen(kontaktovany)) == 0) {
+            bzero(fileMeno, 50);
+            fscanf(f, "%s", fileMeno);
+            if (strncmp(fileMeno, meno, strlen(meno)) == 0) {
+                fgets(message, 256, f);
+                n = write(newsockfd, fileMeno, strlen(fileMeno) + 1);
+                usleep(5);
+                n = write(newsockfd, message, 255);
+                usleep(5);
+            } else {
+                fgets(message, 256, f);
+            }
+        } else {
+            fscanf(f, "%s", fileMeno);
+            fgets(message, 256, f);
+        }
+    }
+    strcpy(fileMeno, "Done");
+    n = write(newsockfd, fileMeno, strlen(fileMeno) + 1);
+    fclose(f);
+}
+
 void *userInteraction(int newsockfd) {
     int n;
     char buffer[256];
+    char messenger[256];
     char vyzva[50];
     char search[50];
     bzero(buffer, 256);
@@ -542,13 +599,29 @@ void *userInteraction(int newsockfd) {
                     readNotification(username, newsockfd);
                     break;
                 case 7:
-                    logged = 0;
+                    getContacts(username, newsockfd);
+                    n = read(newsockfd, buffer, 255);
+                    if(strncmp(buffer, "0", 1)!=0) {
+                        readMessages(username, buffer, newsockfd);
+                    }
                     break;
                 case 8:
+                    getContacts(username, newsockfd);
+                    n = read(newsockfd, buffer, 255);
+                    if(strncmp(buffer, "0", 1)!=0) {
+                        strcpy(search, buffer);
+                        n = read(newsockfd, buffer, 255);
+                        sendMessage(username, search, buffer);
+                    }
+                    break;
+                case 9:
+                    logged = 0;
+                    break;
+                case 10:
                     removeUser(username);
                     logged = 0;
                     break;
-                case 9:
+                case 11:
                     logged = 0;
                     on = 0;
                     break;
