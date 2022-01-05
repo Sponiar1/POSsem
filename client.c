@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
         printf("1 - Free writing: \n");
         printf("2 - Kontakty: \n");
         printf("3 - Pridat novy kontakt: \n");
-        printf("4 - skontrolovat ziadosti o kontakt");
+        printf("4 - Potvrdit ziadosti o kontakt\n");
         printf("5 - Odhlasit \n");
         printf("6 - Zrusit ucet \n");
         printf("7 - Vypnut \n");
@@ -159,6 +159,18 @@ int main(int argc, char *argv[])
                 printf("%s", buffer);
                 break;
             case 4:
+                while (1 == 1) {
+                    n = read(sockfd, buffer, 255);
+                    if (strncmp("Done", buffer, 4) == 0) {
+                        //printf("idem preč z whilu");
+                        break;
+                    }
+                    printf("%s\n", buffer);
+                }
+                printf("Chcete si niekoho pridať? meno = pridanie / 0 = odísť\n");
+                bzero(buffer, 256);
+                fgets(buffer, 255, stdin);
+                n = write(sockfd, buffer, strlen(buffer));
                 break;
             case 5:
                 logged = 0;
