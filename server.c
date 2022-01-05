@@ -34,6 +34,37 @@ int login(char meno[], char heslo[]) {
     return found;
 }
 
+void sendNotification(char meno[], char message[]) {
+    FILE *f;
+    f = fopen("/tmp/PosSemTest/contactNotifications.txt", "a");
+    fprintf(f, "%s %s", meno, message);
+    fclose(f);
+}
+
+void readNotification(char meno[], int newsockfd) {
+    FILE *f;
+    char fileMeno[50];
+    char message[256];
+    int n;
+    meno[strcspn(meno, "\n")] = 0;
+    bzero(fileMeno, 50);
+    bzero(message, 256);
+    f = fopen("/tmp/PosSemTest/contactNotifications.txt", "r");
+    while(!feof(f)) {
+        fscanf(f, "%s", fileMeno);
+        if(strncmp(fileMeno, meno, strlen(meno))==0) {
+        fgets(message, 1024, f);
+        n = write(newsockfd, message, 255);
+        } else {
+            fgets(message, 1024, f);
+        }
+        bzero(fileMeno, 50);
+    }
+    fclose(f);
+    strcpy(message, "Done");
+    n = write(newsockfd, message, 255);
+}
+
 int checkName(char meno[]) {
     int found;
     found = 0;
@@ -302,13 +333,11 @@ void confirmFriendRequest(char meno[], char kontaktovany[]) {
                 }
             }
         } else if(strncmp(fileMeno, kontaktProfile, strlen(kontaktProfile))==0) {
-            fprintf(n, "%s", meno);
             fgets(kontakty, 1024, f);
-            fprintf(n, "%s", kontakty);
+            fprintf(n, "%s %s", meno, kontakty);
         } else {
             fgets(kontakty, 1024, f);
             fprintf(n, "%s ", kontakty);
-            fprintf(n, "\n");
         }
     }
     fclose(f);
@@ -372,6 +401,12 @@ void removeFriend(char meno[], char kontaktovany[]) {
     fclose(n);
     remove("/tmp/PosSemTest/contacts.txt");
     rename("/tmp/PosSemTest/contactsnew.txt", "/tmp/PosSemTest/contacts.txt");
+    char message[256];
+    bzero(message, 256);
+    strcpy(message, "Pouzivatel ");
+    strcat(message, meno);
+    strcat(message, " si vas vymyzal z kontaktov");
+    sendNotification(kontaktovany, message);
 }
 
 void *userInteraction(int newsockfd) {
@@ -504,13 +539,16 @@ void *userInteraction(int newsockfd) {
                     }
                     break;
                 case 6:
-                    logged = 0;
+                    readNotification(username, newsockfd);
                     break;
                 case 7:
-                    removeUser(username);
                     logged = 0;
                     break;
                 case 8:
+                    removeUser(username);
+                    logged = 0;
+                    break;
+                case 9:
                     logged = 0;
                     on = 0;
                     break;
