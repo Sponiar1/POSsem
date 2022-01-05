@@ -6,7 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
-
+//zmena
 int login(char meno[], char heslo[]) {
     int found;
     found = 0;

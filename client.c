@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
             printf("\n");
         }
     }
-
+    //zmena
     while (logged==1) {
         printf("Zvolte akciu: \n");
         printf("1 - Free writing: \n");
