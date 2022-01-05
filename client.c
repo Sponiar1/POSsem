@@ -103,9 +103,10 @@ int main(int argc, char *argv[])
         printf("2 - Kontakty: \n");
         printf("3 - Pridat novy kontakt: \n");
         printf("4 - Potvrdit ziadosti o kontakt\n");
-        printf("5 - Odhlasit \n");
-        printf("6 - Zrusit ucet \n");
-        printf("7 - Vypnut \n");
+        printf("5 - Odtranit kontakt\n");
+        printf("6 - Odhlasit \n");
+        printf("7 - Zrusit ucet \n");
+        printf("8 - Vypnut \n");
         bzero(buffer, 256);
         fgets(buffer, 255, stdin);
         int menu = 1;
@@ -167,19 +168,34 @@ int main(int argc, char *argv[])
                     }
                     printf("%s\n", buffer);
                 }
+                usleep(5);
                 printf("Chcete si niekoho pridať? meno = pridanie / 0 = odísť\n");
                 bzero(buffer, 256);
                 fgets(buffer, 255, stdin);
                 n = write(sockfd, buffer, strlen(buffer));
                 break;
             case 5:
-                logged = 0;
+                while (1 == 1) {
+                    n = read(sockfd, buffer, 255);
+                    if (strncmp("Done", buffer, 4) == 0) {
+                        //printf("idem preč z whilu");
+                        break;
+                    }
+                    printf("%s\n", buffer);
+                }
+                printf("Chcete si niekoho vymazat z priatelov? meno = odobranie / 0 = odísť\n");
+                bzero(buffer, 256);
+                fgets(buffer, 255, stdin);
+                n = write(sockfd, buffer, strlen(buffer));
                 break;
             case 6:
-                printf("vyfilovane");
                 logged = 0;
                 break;
             case 7:
+                printf("vyfilovane");
+                logged = 0;
+                break;
+            case 8:
                 logged = 0;
                 on = 0;
                 break;

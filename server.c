@@ -263,7 +263,7 @@ void getFriendRequests(char meno[], int newsockfd) {
     fclose(f);
 }
 
-void confirmFriendRequest(char meno[], char kontaktovany[], int newsockfd) {
+void confirmFriendRequest(char meno[], char kontaktovany[]) {
     FILE *f, *n;
     char kontakty[1024];
     char kontaktProfile[50];
@@ -307,7 +307,64 @@ void confirmFriendRequest(char meno[], char kontaktovany[], int newsockfd) {
             fprintf(n, "%s", kontakty);
         } else {
             fgets(kontakty, 1024, f);
-            fprintf(n, "%s ", fileMeno, kontakty);
+            fprintf(n, "%s ", kontakty);
+            fprintf(n, "\n");
+        }
+    }
+    fclose(f);
+    fclose(n);
+    remove("/tmp/PosSemTest/contacts.txt");
+    rename("/tmp/PosSemTest/contactsnew.txt", "/tmp/PosSemTest/contacts.txt");
+}
+
+void removeFriend(char meno[], char kontaktovany[]) {
+    FILE *f, *n;
+    char kontakty[1024];
+    bzero(kontakty, 1024);
+    char fileMeno[50];
+    bzero(fileMeno, 50);
+    meno[strcspn(meno, "\n")] = 0;
+    kontaktovany[strcspn(kontaktovany, "\n")] = 0;
+    f = fopen("/tmp/PosSemTest/contacts.txt", "r");
+    n = fopen("/tmp/PosSemTest/contactsnew.txt", "w+");
+    while(!feof(f)) {
+        bzero(fileMeno, 50);
+        bzero(kontakty, 1024);
+        fscanf(f, "%s", fileMeno);
+        fprintf(n,"%s ", fileMeno);
+        if (strncmp(fileMeno, "0", 1) == 0) {
+            break;
+        }
+        if (strncmp(fileMeno, meno, strlen(meno)) == 0) {
+            printf("Našiel som usera");
+            while (1 == 1) {
+                fscanf(f, "%s", fileMeno);
+                if (strncmp(fileMeno, "X", 1) != 0) {
+                        if (strncmp(fileMeno, kontaktovany, strlen(kontaktovany)) != 0) {
+                            fprintf(n, "%s ", fileMeno);
+                        }
+                } else {
+                    fprintf(n, "%s ", fileMeno);
+                    fprintf(n, "\n");
+                    break;
+                }
+            }
+        } else if(strncmp(fileMeno, kontaktovany, strlen(kontaktovany))==0) {
+            while (1 == 1) {
+                fscanf(f, "%s", fileMeno);
+                if (strncmp(fileMeno, "X", 1) != 0) {
+                    if (strncmp(fileMeno, meno, strlen(meno) != 0)) {
+                        fprintf(n, "%s ", fileMeno);
+                    }
+                } else {
+                    fprintf(n, "%s ", fileMeno);
+                    fprintf(n, "\n");
+                    break;
+                }
+            }
+        } else {
+            fgets(kontakty, 1024, f);
+            fprintf(n, "%s ", kontakty);
             fprintf(n, "\n");
         }
     }
@@ -436,17 +493,24 @@ void *userInteraction(int newsockfd) {
                     bzero(buffer, 256);
                     n = read(newsockfd, buffer, 255);
                     if(strncmp(buffer, "0", 1)!=0) {
-                        confirmFriendRequest(username, buffer, newsockfd);
+                        confirmFriendRequest(username, buffer);
                     }
                     break;
                 case 5:
-                    logged = 0;
+                    getContacts(username, newsockfd);
+                    n = read(newsockfd, buffer, 255);
+                    if(strncmp(buffer, "0", 1)!=0) {
+                        removeFriend(username, buffer);
+                    }
                     break;
                 case 6:
-                    removeUser(username);
                     logged = 0;
                     break;
                 case 7:
+                    removeUser(username);
+                    logged = 0;
+                    break;
+                case 8:
                     logged = 0;
                     on = 0;
                     break;
