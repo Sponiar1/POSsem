@@ -7,18 +7,59 @@
 #include <string.h>
 #include <unistd.h>
 
+//zakódovanie správy
 char* code(char message[]) {
     for (int i = 0; message[i] != '\0'; ++i) {
         message[i] += 5;
     }
     return message;
 }
-
+//dekódovanie správy
 char* decode(char message[]) {
     for (int i = 0; message[i] != '\0'; ++i) {
         message[i] -= 5;
     }
     return message;
+}
+
+int sendFile(char nameOfFile[], int newsockfd) {
+    int n, maxFileSize;
+    maxFileSize = 5*1024*1024;
+    long long fileSize = 0;
+    FILE *f;
+    nameOfFile[strcspn(nameOfFile, "\n")] = 0;
+    char path[512];
+    char data[maxFileSize];
+    bzero(path, 512);
+    bzero(data, maxFileSize);
+    strcpy(path,"/tmp/PosSemTest/");
+    strcat(path, nameOfFile);
+    printf("%s", path);
+    f = fopen(path, "r");
+    if (f == NULL) {
+        fprintf(stderr, "Nemožno otvoriť súbor\n");
+        return 1;
+    }
+    fseek(f, 0, SEEK_END);
+    fileSize = ftell(f);
+    printf("%d", fileSize);
+    if (fileSize <= maxFileSize) {
+        n = write(newsockfd, nameOfFile, strlen(nameOfFile));
+        while (!feof(f)) {
+            bzero(data, maxFileSize);
+            fgets(data, maxFileSize, f);
+            n = write(newsockfd, data, strlen(data) - 1);
+        }
+    } else {
+        strcpy(nameOfFile, "Error");
+        n = write(newsockfd, nameOfFile, strlen(nameOfFile));
+        return 2;
+    }
+    bzero(data, maxFileSize);
+    strcpy(data, "Done");
+    n = write(newsockfd, data, strlen(data));
+    fclose(f);
+    return 0;
 }
 
 int main(int argc, char *argv[])
@@ -264,7 +305,7 @@ int main(int argc, char *argv[])
                     bzero(buffer, 256);
                     fgets(buffer, 255, stdin);
                     strcpy(buffer, code(buffer));
-                    n = write(sockfd, buffer, strlen(buffer));
+                    n = write(sockfd, buffer, 50);
                 }
                 break;
             case 9:
@@ -277,6 +318,29 @@ int main(int argc, char *argv[])
             case 11:
                 logged = 0;
                 on = 0;
+                break;
+            case 12:
+                printf("Chcem poslat file uzivatelovi: (0 = exit)\n");
+                while (1 == 1) {
+                    n = read(sockfd, buffer, 255);
+                    usleep(5);
+                    if (strncmp("Done", buffer, 4) == 0) {
+                        //printf("idem preč z whilu");
+                        break;
+                    }
+                    printf("%s\n", buffer);
+                }
+                bzero(buffer, 256);
+                fgets(buffer, 255, stdin);
+                n = write(sockfd, buffer, strlen(buffer));
+                if (strncmp("0", buffer, 1) != 0) {
+                    n = read(sockfd, buffer, 255);
+                    printf("%s", buffer);
+                    bzero(buffer, 256);
+                    fgets(buffer, 255, stdin);
+                    int dobre = sendFile(buffer, sockfd);
+                    printf("%d", dobre);
+                }
                 break;
             default:
                 break;
