@@ -6,7 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
-
+//zmena
 int uploadFile(char meno[], char kontaktovany[], int newsockfd) {
     int n, maxFileSize;
     FILE *f;
