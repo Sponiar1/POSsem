@@ -230,6 +230,9 @@ int main(int argc, char *argv[])
                 bzero(buffer, 256);
                 fgets(buffer, 255, stdin);
                 n = write(sockfd, buffer, strlen(buffer));
+                if (strncmp("0", buffer, 1) == 0) {
+                    break;
+                }
                 while (1==1) {
                     n = read(sockfd, buffer, 255);
                     if(strncmp("Done", buffer, 4) == 0) {
@@ -238,8 +241,9 @@ int main(int argc, char *argv[])
                     printf("%s: ", buffer);
                     usleep(5);
                     n = read(sockfd, buffer, 255);
-                    usleep(5);
+                    strcpy(buffer, decode(buffer));
                     printf("%s", buffer);
+                    usleep(5);
                 }
                 break;
             case 8:
@@ -259,6 +263,7 @@ int main(int argc, char *argv[])
                 if (strncmp("0", buffer, 1) != 0) {
                     bzero(buffer, 256);
                     fgets(buffer, 255, stdin);
+                    strcpy(buffer, code(buffer));
                     n = write(sockfd, buffer, strlen(buffer));
                 }
                 break;
