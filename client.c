@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
+//zmena
 //zakódovanie správy
 char* code(char message[]) {
     for (int i = 0; message[i] != '\0'; ++i) {
