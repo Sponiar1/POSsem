@@ -6,7 +6,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
-//zmena
+
+/*
 int uploadFile(char meno[], char kontaktovany[], int newsockfd) {
     int n, maxFileSize;
     FILE *f;
@@ -19,6 +20,7 @@ int uploadFile(char meno[], char kontaktovany[], int newsockfd) {
     strcpy(path, "Daj meno suboru");
     n = write(newsockfd, path, strlen(path));
     strcpy(path, "/tmp/PosSemTest/clientFiles/");
+
     n = read(newsockfd, fileName, strlen(fileName));
     if (strncmp(fileName, "Error", 5) == 0) {
         return 1;
@@ -41,7 +43,7 @@ int uploadFile(char meno[], char kontaktovany[], int newsockfd) {
     fprintf(f, "%s %s %s", meno, kontaktovany, fileName);
     fclose(f);
 }
-
+*/
 int login(char meno[], char heslo[]) {
     int found;
     found = 0;
@@ -205,7 +207,6 @@ void getContacts(char meno[], int newsockfd) {
     while(!feof(f)) {
         fscanf(f, "%s", fileMeno);
         if (strncmp(fileMeno, meno, strlen(meno)) == 0) {
-            printf("Našiel som");
             while (1==1) {
                 bzero(fileMeno, 50);
                 fscanf(f, "%s", fileMeno);
@@ -511,40 +512,41 @@ int createGroupChat(char meno[], char groupName[]) {
     f = fopen("/tmp/PosSemTest/groupChatContacts.txt", "r");
     while(!feof(f)) {
         fscanf(f, "%s", groupID);
-        if(strncmp(groupID, groupName, strlen(groupID))==0) {
+        if(strncmp(groupID, groupName, strlen(groupName))==0) {
             return 2;
         }
         fgets(members, 1024, f);
     }
     fclose(f);
     f = fopen("/tmp/PosSemTest/groupChatContacts.txt", "a");
-    fprintf(f, "%s %s ", groupName, meno);
+    fprintf(f, "%s %s #", groupName, meno);
     fclose(f);
     return 0;
 }
 
 int addToGroupChat(char meno[], char pridany[], char groupName[]) {
     char members[1024];
+    char member[50];
     char groupID[50];
     int found;
     groupName[strcspn(groupName, "\n")] = 0;
     meno[strcspn(meno, "\n")] = 0;
     pridany[strcspn(pridany, "\n")] = 0;
-    bzero(members,1024);
     bzero(groupID, 50);
     FILE *f, *n;
     f = fopen("/tmp/PosSemTest/groupChatContacts.txt", "r");
     while(!feof(f)) {
+        bzero(members,1024);
         fscanf(f, "%s", groupID);
         if(strncmp(groupID, groupName, strlen(groupID))==0) {
-            fgets(members, 1024, f);
-            found = strstr(members, meno);
-            if(found == NULL) {
-                return 2;
-            }
-            found = strstr(members, pridany);
-            if(found == NULL) {
-                return 3;
+            while(1 == 1) {
+                fscanf(f, "%s", member);
+                if(strncmp(member, pridany, strlen(member)) == 0) {
+                    return 2;
+                }
+                if(strncmp(member, "#", 1)==0) {
+                    break;
+                }
             }
         } else {
             fgets(members, 1024, f);
@@ -566,33 +568,40 @@ int addToGroupChat(char meno[], char pridany[], char groupName[]) {
     }
     fclose(f);
     fclose(n);
+    remove("/tmp/PosSemTest/groupChatContacts.txt");
+    rename("/tmp/PosSemTest/groupChatContactsnew.txt", "/tmp/PosSemTest/groupChatContacts.txt");
     return 0;
 }
 
 int checkGroup(char meno[], char groupName[]) {
-    char members[1024];
+    char member[50];
+    char others[1024];
     char groupID[50];
     int found = 99;
     groupName[strcspn(groupName, "\n")] = 0;
     meno[strcspn(meno, "\n")] = 0;
-    bzero(members,1024);
+    bzero(member,50);
     bzero(groupID, 50);
     FILE *f;
     f = fopen("/tmp/PosSemTest/groupChatContacts.txt", "r");
     while(!feof(f)) {
+        bzero(groupID,50);
         fscanf(f, "%s", groupID);
         if(strncmp(groupID, groupName, strlen(groupID))==0) {
-            fgets(members, 1024, f);
-            found = strstr(members, meno);
-            if(found != NULL) {
-                found = 1;
-                break;
-            } else  {
-                found = 0;
-                break;
+            while(1==1) {
+                fscanf(f, "%s", member);
+                if(strncmp(member, meno, strlen(meno))==0){
+                    found = 1;
+                    fclose(f);
+                    return found;
+                }
+                if(strncmp(member, "#", 1)==0) {
+                    fclose(f);
+                    return found;
+                }
             }
         } else {
-            fgets(members, 1024, f);
+            fgets(others, 1024, f);
         }
     }
     fclose(f);
@@ -600,7 +609,7 @@ int checkGroup(char meno[], char groupName[]) {
 }
 
 int sendGroupMessage(char meno[], char groupName[], char message[]) {
-    if (checkGroup(meno, groupName==1)) {
+    if (checkGroup(meno, groupName)==1) {
         FILE *f;
         f = fopen("/tmp/PosSemTest/groupChatMessages.txt", "a");
         fprintf(f, "%s %s %s", groupName, meno, message);
@@ -611,14 +620,14 @@ int sendGroupMessage(char meno[], char groupName[], char message[]) {
     }
 }
 
-int readGroupMessages(char meno[], char groupName[], int newsockfd) {
+void readGroupMessages(char meno[], char groupName[], int newsockfd) {
     char message[256];
     char groupID[50];
     char fileMeno[50];
     int found, n;
     groupName[strcspn(groupName, "\n")] = 0;
     meno[strcspn(meno, "\n")] = 0;
-    bzero(message,1024);
+    bzero(message,256);
     bzero(groupID, 50);
     bzero(fileMeno, 50);
     if (checkGroup(meno, groupName)==1) {
@@ -628,19 +637,59 @@ int readGroupMessages(char meno[], char groupName[], int newsockfd) {
             fscanf(f, "%s ", groupID);
             if(strncmp(groupID, groupName, strlen(groupID))==0) {
                 fscanf(f, "%s ", fileMeno);
+                strcat(fileMeno, ": ");
                 n = write(newsockfd, fileMeno, strlen(fileMeno));
-                fgets(message, 1024, f);
+                fgets(message, 256, f);
                 n=write(newsockfd, message, strlen(message));
+                usleep(5);
             } else {
                 fscanf(f, "%s", fileMeno);
-                fgets(message, 1024, f);
+                fgets(message, 256, f);
             }
         }
         fclose(f);
-        return 0;
     } else {
-        return 1;
+        bzero(message, 256);
+        strcpy(message, "Done");
+        n = write(newsockfd, message, strlen(message));
     }
+    bzero(message, 256);
+    strcpy(message, "Done");
+    n = write(newsockfd, message, strlen(message));
+}
+
+void getGroupchats(char meno[], int newsockfd) {
+    char member[50];
+    char groupID[50];
+    int n;
+    meno[strcspn(meno, "\n")] = 0;
+    FILE *f;
+    f = fopen("/tmp/PosSemTest/groupChatContacts.txt", "r");
+    while(!feof(f)) {
+        bzero(member,50);
+        bzero(groupID, 50);
+        fscanf(f, "%s", groupID);
+        if (strncmp(groupID, "0", 1) != 0) {
+            while (1 == 1) {
+                bzero(member,50);
+                fscanf(f, "%s", member);
+                if (strncmp(member, meno, strlen(meno)) == 0) {
+                    n = write(newsockfd, groupID, strlen(groupID));
+                    usleep(5);
+                }
+                if (strncmp(member, "#", 1) == 0 || strlen(member) == 0) {
+                    break;
+                }
+            }
+        }
+        if(strlen(groupID)==0) {
+            break;
+        }
+    }
+    fclose(f);
+    bzero(groupID, 50);
+    strcpy(groupID, "Done");
+    n = write(newsockfd, groupID, strlen(groupID));
 }
 
 void *userInteraction(int newsockfd) {
@@ -657,11 +706,13 @@ void *userInteraction(int newsockfd) {
     while(on==1) {
         //login/register
         while (logged == 0) {
+            bzero(buffer, 256);
             n = read(newsockfd, buffer, 255);
             if (strncmp("1", buffer, 1) == 0) {
                 bzero(vyzva, 50);
                 strcpy(vyzva, "Meno: ");
                 n = write(newsockfd, vyzva, strlen(vyzva) + 1);
+                bzero(buffer, 256);
                 n = read(newsockfd, buffer, 255);
                 char meno[50];
                 bzero(meno, 50);
@@ -803,12 +854,49 @@ void *userInteraction(int newsockfd) {
                     logged = 0;
                     on = 0;
                     break;
-                case 12:
+              /*  case 12:
                     getContacts(username, newsockfd);
                     n = read(newsockfd, buffer, 255);
                     if(strncmp(buffer, "0", 1)!=0) {
                         uploadFile(username, buffer, newsockfd);
                     }
+                    break;*/
+                case 13:
+                    n = read(newsockfd, buffer, 255);
+                    n = createGroupChat(username, buffer);
+                    buffer[0] = n;
+                    n = write(newsockfd, buffer, strlen(buffer));
+                    break;
+                case 14:
+                    getContacts(username, newsockfd);
+                    n = read(newsockfd, buffer, 255);
+                    strcpy(search, buffer);
+                    getGroupchats(username, newsockfd);
+                    n = read(newsockfd, buffer, 255);
+                    n = addToGroupChat(username, search, buffer);
+                    bzero(buffer, 255);
+                    strcpy(buffer, "Error");
+                    if (n == 0) {
+                        bzero(buffer, 255);
+                        buffer[0] = n + '0';
+                    }
+                    n = write(newsockfd, buffer, strlen(buffer));
+                    break;
+                case 15:
+                    getGroupchats(username, newsockfd);
+                    usleep(5);
+                    n = read(newsockfd, buffer, 255);
+                    strcpy(search, buffer);
+                    usleep(5);
+                    n = read(newsockfd, buffer, 255);
+                    sendGroupMessage(username, search, buffer);
+                    break;
+                case 16:
+                    getGroupchats(username, newsockfd);
+                    bzero(buffer, 256);
+                    usleep(5);
+                    n = read(newsockfd, buffer, 255);
+                    readGroupMessages(username, buffer, newsockfd);
                     break;
                 default:
                     break;
