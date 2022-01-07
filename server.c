@@ -19,7 +19,10 @@ int uploadFile(char meno[], char kontaktovany[], int newsockfd) {
     strcpy(path, "Daj meno suboru");
     n = write(newsockfd, path, strlen(path));
     strcpy(path, "/tmp/PosSemTest/clientFiles/");
-    n = read(newsockfd, fileName, strlen(fileName));
+    while (n == 0)
+    {
+        n = read(newsockfd, fileName, strlen(fileName));
+    }
     if (strncmp(fileName, "Error", 5) == 0) {
         return 1;
     }
