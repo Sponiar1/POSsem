@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-//zmena
 //zakódovanie správy
 char* code(char message[]) {
     for (int i = 0; message[i] != '\0'; ++i) {
@@ -21,7 +20,7 @@ char* decode(char message[]) {
     }
     return message;
 }
-
+/*
 int sendFile(char nameOfFile[], int newsockfd) {
     int n, maxFileSize;
     maxFileSize = 5*1024*1024;
@@ -61,15 +60,16 @@ int sendFile(char nameOfFile[], int newsockfd) {
     fclose(f);
     return 0;
 }
-
+*/
 int main(int argc, char *argv[])
 {
     int sockfd, n, logged;
     struct sockaddr_in serv_addr;
     struct hostent* server;
     int on = 1;
+    int menu;
     char buffer[256];
-    char name[50];
+    char name[20];
 
     if (argc < 3)
     {
@@ -114,36 +114,84 @@ int main(int argc, char *argv[])
         printf("Registrovat sa - 2\n");
         fgets(buffer, 255, stdin);
         n = write(sockfd, buffer, strlen(buffer));
+        if (n < 0) {
+            perror("Error writing to socket");
+            return 5;
+        }
 
         if (strncmp("1", buffer, 1) == 0) {
             bzero(buffer, 256);
             n = read(sockfd, buffer, 255);
+            if (n < 0) {
+                perror("Error reading from socket");
+                return 6;
+            }
             printf("%s", buffer);
+            bzero(buffer, 256);
             fgets(buffer, 255, stdin);
             n = write(sockfd, buffer, strlen(buffer));
-            bzero(name, 50);
+            if (n < 0) {
+                perror("Error writing to socket");
+                return 5;
+            }
+            bzero(name, 20);
             strcpy(name, buffer);
 
             bzero(buffer, 256);
             n = read(sockfd, buffer, 255);
+            if (n < 0) {
+                perror("Error reading from socket");
+                return 6;
+            }
             printf("%s", buffer);
+            bzero(buffer, 256);
             fgets(buffer, 255, stdin);
             n = write(sockfd, buffer, strlen(buffer));
+            if (n < 0) {
+                perror("Error writing to socket");
+                return 5;
+            }
             n = read(sockfd, buffer, 255);
+            if (n < 0) {
+                perror("Error reading from socket");
+                return 6;
+            }
         }
         if (strncmp("2", buffer, 1) == 0) {
             bzero(buffer, 256);
             n = read(sockfd, buffer, 255);
+            if (n < 0) {
+                perror("Error reading from socket");
+                return 6;
+            }
             printf("%s", buffer);
+            bzero(buffer, 256);
             fgets(buffer, 255, stdin);
             n = write(sockfd, buffer, strlen(buffer));
+            if (n < 0) {
+                perror("Error writing to socket");
+                return 5;
+            }
 
             bzero(buffer, 256);
             n = read(sockfd, buffer, 255);
+            if (n < 0) {
+                perror("Error reading from socket");
+                return 6;
+            }
             printf("%s", buffer);
+            bzero(buffer, 256);
             fgets(buffer, 255, stdin);
             n = write(sockfd, buffer, strlen(buffer));
+            if (n < 0) {
+                perror("Error writing to socket");
+                return 5;
+            }
             n = read(sockfd, buffer, 255);
+            if (n < 0) {
+                perror("Error reading from socket");
+                return 6;
+            }
         }
         printf("%s", buffer);
         if(strncmp("V", buffer, 1) == 0) {
@@ -151,7 +199,7 @@ int main(int argc, char *argv[])
             printf("\n");
         }
     }
-    //zmena
+
     while (logged==1) {
         printf("Zvolte akciu: \n");
         printf("1 - Free writing: \n");
@@ -165,14 +213,21 @@ int main(int argc, char *argv[])
         printf("9 - Odhlasit \n");
         printf("10 - Zrusit ucet \n");
         printf("11 - Vypnut \n");
+        printf("12 - Send file\n");
+        printf("13 - Create group chat\n");
+        printf("14 - add to group chat\n");
+        printf("15 - send message to group chat\n");
+        printf("16 - read group chat\n");
         bzero(buffer, 256);
         fgets(buffer, 255, stdin);
-        int menu = 1;
         menu = atoi(buffer);
-        //printf("%d", menu);
         n = write(sockfd, buffer, strlen(buffer));
+        if (n < 0) {
+            perror("Error writing to socket");
+            return 5;
+        }
         switch (menu) {
-            case 1:
+            case 1: //free writing
                 while (1 == 1) {
                     printf("Please enter a message: ");
                     bzero(buffer, 256);
@@ -198,45 +253,71 @@ int main(int argc, char *argv[])
                     printf("%s\n", buffer);
                 }
                 break;
-            case 2:
-                //printf("Vybral som kontakty");
+            case 2: //kontakty
                 while (1 == 1) {
+                    bzero(buffer, 256);
                     n = read(sockfd, buffer, 255);
+                    if (n < 0) {
+                        perror("Error reading from socket");
+                        return 6;
+                    }
                     if (strncmp("Done", buffer, 4) == 0) {
-                        //printf("idem preč z whilu");
                         break;
                     }
                     printf("%s\n", buffer);
+                    usleep(5);
                 }
                 break;
-            case 3:
-                printf("Chcem sa spojit s:");
+            case 3: //poslat ziadost o priatelstvo
+                printf("Chcem sa spojit s:\n");
+                bzero(buffer, 256);
                 fgets(buffer, 255, stdin);
                 n = write(sockfd, buffer, strlen(buffer));
+                if (n < 0) {
+                    perror("Error writing to socket");
+                    return 5;
+                }
                 usleep(5);
+                bzero(buffer, 256);
                 n = read(sockfd, buffer, 255);
-                printf("%s", buffer);
+                if (n < 0) {
+                    perror("Error reading from socket");
+                    return 6;
+                }
+                printf("%s\n", buffer);
                 break;
-            case 4:
+            case 4: //potvrdit ziadost o priatelstvo
                 while (1 == 1) {
+                    bzero(buffer, 256);
                     n = read(sockfd, buffer, 255);
+                    if (n < 0) {
+                        perror("Error reading from socket");
+                        return 6;
+                    }
                     if (strncmp("Done", buffer, 4) == 0) {
                         //printf("idem preč z whilu");
                         break;
                     }
                     printf("%s\n", buffer);
+                    usleep(5);
                 }
-                usleep(5);
                 printf("Chcete si niekoho pridať? meno = pridanie / 0 = odísť\n");
                 bzero(buffer, 256);
                 fgets(buffer, 255, stdin);
                 n = write(sockfd, buffer, strlen(buffer));
+                if (n < 0) {
+                    perror("Error writing to socket");
+                    return 5;
+                }
                 break;
-            case 5:
+            case 5: //vymazat z priatelov
                 while (1 == 1) {
                     n = read(sockfd, buffer, 255);
+                    if (n < 0) {
+                        perror("Error reading from socket");
+                        return 6;
+                    }
                     if (strncmp("Done", buffer, 4) == 0) {
-                        //printf("idem preč z whilu");
                         break;
                     }
                     printf("%s\n", buffer);
@@ -246,24 +327,34 @@ int main(int argc, char *argv[])
                 fgets(buffer, 255, stdin);
                 usleep(5);
                 n = write(sockfd, buffer, strlen(buffer));
+                if (n < 0) {
+                    perror("Error writing to socket");
+                    return 5;
+                }
                 break;
-            case 6:
+            case 6: //notifikacie
                 while (1 == 1) {
                     n = read(sockfd, buffer, 255);
+                    if (n < 0) {
+                        perror("Error reading from socket");
+                        return 6;
+                    }
                     if (strncmp("Done", buffer, 4) == 0) {
-                        //printf("idem preč z whilu");
                         break;
                     }
                     printf("%s\n", buffer);
                 }
                 break;
-            case 7:
+            case 7: //precitat spravy
                 printf("Chcem si pozriet konverzaciu s : (0 = exit)\n");
                 while (1 == 1) {
                     n = read(sockfd, buffer, 255);
+                    if (n < 0) {
+                        perror("Error reading from socket");
+                        return 6;
+                    }
                     usleep(5);
                     if (strncmp("Done", buffer, 4) == 0) {
-                        //printf("idem preč z whilu");
                         break;
                     }
                     printf("%s\n", buffer);
@@ -271,29 +362,44 @@ int main(int argc, char *argv[])
                 bzero(buffer, 256);
                 fgets(buffer, 255, stdin);
                 n = write(sockfd, buffer, strlen(buffer));
+                if (n < 0) {
+                    perror("Error writing to socket");
+                    return 5;
+                }
                 if (strncmp("0", buffer, 1) == 0) {
                     break;
                 }
                 while (1==1) {
                     n = read(sockfd, buffer, 255);
+                    if (n < 0) {
+                        perror("Error reading from socket");
+                        return 6;
+                    }
                     if(strncmp("Done", buffer, 4) == 0) {
                         break;
                     }
                     printf("%s: ", buffer);
                     usleep(5);
                     n = read(sockfd, buffer, 255);
+                    if (n < 0) {
+                        perror("Error reading from socket");
+                        return 6;
+                    }
                     strcpy(buffer, decode(buffer));
                     printf("%s", buffer);
                     usleep(5);
                 }
                 break;
-            case 8:
+            case 8: //napisat uzivatelovi
                 printf("Chcem napisat spravu uzivatelovi: (0 = exit)\n");
                 while (1 == 1) {
                     n = read(sockfd, buffer, 255);
+                    if (n < 0) {
+                        perror("Error reading from socket");
+                        return 6;
+                    }
                     usleep(5);
                     if (strncmp("Done", buffer, 4) == 0) {
-                        //printf("idem preč z whilu");
                         break;
                     }
                     printf("%s\n", buffer);
@@ -301,31 +407,42 @@ int main(int argc, char *argv[])
                 bzero(buffer, 256);
                 fgets(buffer, 255, stdin);
                 n = write(sockfd, buffer, strlen(buffer));
+                if (n < 0) {
+                    perror("Error writing to socket");
+                    return 5;
+                }
                 if (strncmp("0", buffer, 1) != 0) {
+                    printf("Moja správa: ");
                     bzero(buffer, 256);
                     fgets(buffer, 255, stdin);
                     strcpy(buffer, code(buffer));
                     n = write(sockfd, buffer, 50);
+                    if (n < 0) {
+                        perror("Error writing to socket");
+                        return 5;
+                    }
                 }
                 break;
-            case 9:
+            case 9: //odhlasit
                 logged = 0;
                 break;
-            case 10:
-                printf("vyfilovane");
+            case 10: //zrusit ucet
                 logged = 0;
                 break;
-            case 11:
+            case 11: //vypnut klienta
                 logged = 0;
                 on = 0;
                 break;
-            case 12:
+      /*      case 12: //poslat file(nefunkcne)
                 printf("Chcem poslat file uzivatelovi: (0 = exit)\n");
                 while (1 == 1) {
                     n = read(sockfd, buffer, 255);
+                    if (n < 0) {
+                        perror("Error reading from socket");
+                        return 6;
+                    }
                     usleep(5);
                     if (strncmp("Done", buffer, 4) == 0) {
-                        //printf("idem preč z whilu");
                         break;
                     }
                     printf("%s\n", buffer);
@@ -333,13 +450,172 @@ int main(int argc, char *argv[])
                 bzero(buffer, 256);
                 fgets(buffer, 255, stdin);
                 n = write(sockfd, buffer, strlen(buffer));
+                if (n < 0) {
+                    perror("Error writing to socket");
+                    return 5;
+                }
                 if (strncmp("0", buffer, 1) != 0) {
                     n = read(sockfd, buffer, 255);
+                    if (n < 0) {
+                        perror("Error reading from socket");
+                        return 6;
+                    }
                     printf("%s", buffer);
                     bzero(buffer, 256);
                     fgets(buffer, 255, stdin);
                     int dobre = sendFile(buffer, sockfd);
                     printf("%d", dobre);
+                }
+                break;*/
+            case 13: //vytvorit skupinovy chat
+                printf("Zadajte nazov group chatu: ");
+                bzero(buffer, 256);
+                fgets(buffer, 255, stdin);
+                n = write(sockfd, buffer, strlen(buffer));
+                if (n < 0) {
+                    perror("Error writing to socket");
+                    return 5;
+                }
+                bzero(buffer, 256);
+                n = read(sockfd, buffer, 255);
+                if (n < 0) {
+                    perror("Error reading from socket");
+                    return 6;
+                }
+                if (buffer[0] == 0) {
+                    printf("Chat uspesne vytvoreny");
+                } else {
+                    printf("Nepodarilo sa vytvorit groupu");
+                }
+                break;
+            case 14: //pridat frienda do group chatu
+                printf("Koho chcete pridat do groupchatu? \n");
+                while (1 == 1) {
+                    bzero(buffer, 256);
+                    n = read(sockfd, buffer, 255);
+                    if (n < 0) {
+                        perror("Error reading from socket");
+                        return 6;
+                    }
+                    if (strncmp("Done", buffer, 4) == 0) {
+                        break;
+                    }
+                    printf("%s\n", buffer);
+                    usleep(5);
+                }
+                bzero(buffer, 256);
+                fgets(buffer, 255, stdin);
+                n = write(sockfd, buffer, strlen(buffer));
+                if (n < 0) {
+                    perror("Error writing to socket");
+                    return 5;
+                }
+                printf("A do ktorého? ");
+                while(1 == 1) {
+                    bzero(buffer, 256);
+                    n = read(sockfd, buffer, 255);
+                    if (n < 0) {
+                        perror("Error reading from socket");
+                        return 6;
+                    }
+                    printf("%s", buffer);
+                    usleep(5);
+                    if (strstr(buffer, "Done") !=NULL) {
+                        break;
+                    }
+                }
+                bzero(buffer, 256);
+                fgets(buffer, 255, stdin);
+                n = write(sockfd, buffer, strlen(buffer));
+                if (n < 0) {
+                    perror("Error writing to socket");
+                    return 5;
+                }
+                bzero(buffer, 256);
+                n = read(sockfd, buffer, 255);
+                if (n < 0) {
+                    perror("Error reading from socket");
+                    return 6;
+                }
+                printf("%s", buffer);
+                usleep(5);
+                if (strncmp(buffer, "0", 1)==0) {
+                    printf("User bol uspesne pridany");
+                } else {
+                    printf("Chyba pri vkladani usera, skontrolujte udaje");
+                }
+                break;
+            case 15: //Napisat spravu skupine
+                usleep(5);
+                printf("A do ktoréj? \n");
+                while(1 == 1) {
+                    bzero(buffer, 256);
+                    n = read(sockfd, buffer, 255);
+                    if (n < 0) {
+                        perror("Error reading from socket");
+                        return 6;
+                    }
+                    if (strncmp("Done", buffer, 4) == 0) {
+                        usleep(5);
+                        break;
+                    }
+                    printf("%s", buffer);
+                    printf("\n");
+                    usleep(5);
+                }
+                bzero(buffer, 256);
+                fgets(buffer, 255, stdin);
+                n = write(sockfd, buffer, strlen(buffer));
+                if (n < 0) {
+                    perror("Error writing to socket");
+                    return 5;
+                }
+                usleep(5);
+                printf("Správa: ");
+                bzero(buffer, 256);
+                fgets(buffer, 255, stdin);
+                n = write(sockfd, buffer, strlen(buffer));
+                if (n < 0) {
+                    perror("Error writing to socket");
+                    return 5;
+                }
+                break;
+            case 16: //pozriet spravy zo skupiny
+                printf("A ktorého? ");
+                while(1 == 1) {
+                    bzero(buffer, 256);
+                    n = read(sockfd, buffer, 255);
+                    if (n < 0) {
+                        perror("Error reading from socket");
+                        return 6;
+                    }
+                    if (strncmp("Done", buffer, 4) == 0) {
+                        break;
+                    }
+                    printf("%s", buffer);
+                    printf("\n");
+                    usleep(5);
+                }
+                usleep(5);
+                bzero(buffer, 256);
+                fgets(buffer, 255, stdin);
+                n = write(sockfd, buffer, strlen(buffer));
+                if (n < 0) {
+                    perror("Error writing to socket");
+                    return 5;
+                }
+                while(1 == 1) {
+                    bzero(buffer, 256);
+                    n = read(sockfd, buffer, 255);
+                    if (n < 0) {
+                        perror("Error reading from socket");
+                        return 6;
+                    }
+                    if (strncmp("Done", buffer, 4) == 0) {
+                        break;
+                    }
+                    printf("%s\n", buffer);
+                    usleep(5);
                 }
                 break;
             default:
