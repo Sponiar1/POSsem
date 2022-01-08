@@ -7,12 +7,13 @@
 #include <unistd.h>
 #include <pthread.h>
 
+pthread_mutex_t mutex;
 /*
 int uploadFile(char meno[], char kontaktovany[], int newsockfd) {
     int n, maxFileSize;
     FILE *f;
     char path[512];
-    char fileName[50];
+    char fileName[20];
     char data[maxFileSize];
     bzero(path, 512);
     bzero(data, maxFileSize);
@@ -48,25 +49,23 @@ int login(char meno[], char heslo[]) {
     int found;
     found = 0;
     FILE *f;
-    f = fopen("/tmp/PosSemTest/login.txt", "r");
-    char fileMeno[50];
-    char fileHeslo[50];
-    bzero(fileMeno, 50);
-    bzero(fileHeslo, 50);
+    char fileMeno[20];
+    char fileHeslo[20];
     meno[strcspn(meno, "\n")] = 0;
     heslo[strcspn(heslo, "\n")] = 0;
+    f = fopen("/tmp/PosSemTest/login.txt", "r");
     while(!feof(f)) {
+        bzero(fileMeno, 20);
+        bzero(fileHeslo, 20);
         fscanf(f, "%s", fileMeno);
         printf("%s \n", fileMeno);
         fscanf(f, "%s", fileHeslo);
         printf("%s \n", fileHeslo);
         if (strncmp(fileMeno, meno, strlen(meno)) == 0 && (strncmp(fileHeslo, heslo, strlen(heslo))) == 0) {
             found = 1;
-            printf("Našiel som");
             break;
         }
     }
-
     fclose(f);
     return found;
 }
@@ -80,22 +79,19 @@ void sendNotification(char meno[], char message[]) {
 
 void readNotification(char meno[], int newsockfd) {
     FILE *f;
-    char fileMeno[50];
+    char fileMeno[20];
     char message[256];
     int n;
     meno[strcspn(meno, "\n")] = 0;
-    bzero(fileMeno, 50);
-    bzero(message, 256);
     f = fopen("/tmp/PosSemTest/contactNotifications.txt", "r");
     while(!feof(f)) {
+        bzero(fileMeno, 20);
+        bzero(message, 256);
         fscanf(f, "%s", fileMeno);
+        fgets(message, 256, f);
         if(strncmp(fileMeno, meno, strlen(meno))==0) {
-        fgets(message, 1024, f);
-        n = write(newsockfd, message, 255);
-        } else {
-            fgets(message, 1024, f);
+            n = write(newsockfd, message, 255);
         }
-        bzero(fileMeno, 50);
     }
     fclose(f);
     strcpy(message, "Done");
@@ -106,20 +102,17 @@ int checkName(char meno[]) {
     int found;
     found = 0;
     FILE *f;
-    f = fopen("/tmp/PosSemTest/login.txt", "r");
-    char fileMeno[50];
-    char fileHeslo[50];
-    bzero(fileMeno, 50);
-    bzero(fileHeslo, 50);
+    char fileMeno[20];
+    char fileHeslo[20];
     meno[strcspn(meno, "\n")] = 0;
+    f = fopen("/tmp/PosSemTest/login.txt", "r");
     while(!feof(f)) {
+        bzero(fileMeno, 20);
+        bzero(fileHeslo, 20);
         fscanf(f, "%s", fileMeno);
-        printf("%s \n", fileMeno);
         fscanf(f, "%s", fileHeslo);
-        printf("%s \n", fileHeslo);
         if (strncmp(fileMeno, meno, strlen(meno)) == 0) {
             found = 1;
-            printf("Našiel som");
             break;
         }
     }
@@ -134,33 +127,31 @@ void addUser(char meno[], char heslo[]) {
     fclose(f);
 
     f = fopen("/tmp/PosSemTest/contacts.txt", "a");
+    fprintf(f, "%s #", meno);
     fprintf(f, "\n");
-    fprintf(f, "%s X", meno);
     fclose(f);
 
 }
 
 void removeUser(char meno[]) {
+    char fileMeno[20];
+    char fileHeslo[20];
+    meno[strcspn(meno, "\n")] = 0;
     FILE *f, *n;
     f = fopen("/tmp/PosSemTest/login.txt", "r");
     n = fopen("/tmp/PosSemTest/loginnew.txt", "w+");
-    char fileMeno[50];
-    char fileHeslo[50];
-    meno[strcspn(meno, "\n")] = 0;
     while(!feof(f)) {
-        bzero(fileMeno, 50);
-        bzero(fileHeslo, 50);
+        bzero(fileMeno, 20);
+        bzero(fileHeslo, 20);
         fscanf(f, "%s", fileMeno);
         if (strncmp(fileMeno, "0", 1) == 0) {
             break;
         }
         if (strncmp(fileMeno, meno, strlen(meno)) != 0) {
-            //printf("Našiel som");
             fscanf(f, "%s", fileHeslo);
             fileHeslo[strcspn(fileHeslo, "\n")] = 0;
             fprintf(n, "%s %s", fileMeno, fileHeslo);
             fprintf(n,"\n");
-            printf("%s %s\n", fileMeno, fileHeslo);
         } else {
             fscanf(f, "%s", fileHeslo);
         }
@@ -171,21 +162,19 @@ void removeUser(char meno[]) {
     rename("/tmp/PosSemTest/loginnew.txt", "/tmp/PosSemTest/login.txt");
 
     char kontakty[1024];
-    bzero(kontakty, 1024);
     f = fopen("/tmp/PosSemTest/contacts.txt", "r");
     n = fopen("/tmp/PosSemTest/contactsnew.txt", "w+");
     while(!feof(f)) {
-        bzero(fileMeno, 50);
+        bzero(fileMeno, 20);
+        bzero(kontakty, 1024);
         fscanf(f, "%s", fileMeno);
         if (strncmp(fileMeno, "0", 1) == 0) {
             break;
         }
         if (strncmp(fileMeno, meno, strlen(meno)) != 0) {
-            //printf("Našiel som");
             fgets(kontakty, 1024, f);
             fprintf(n, "%s %s", fileMeno, kontakty);
             fprintf(n,"\n");
-            printf("%s %s\n", fileMeno, kontakty);
         } else {
             fgets(kontakty, 1024, f);
         }
@@ -199,20 +188,20 @@ void removeUser(char meno[]) {
 void getContacts(char meno[], int newsockfd) {
     FILE *f;
     int n;
-    f = fopen("/tmp/PosSemTest/contacts.txt", "r");
-    char fileMeno[50];
-    bzero(fileMeno, 50);
-    char trash[1024];
+    char fileMeno[20];
+    char kontakty[1024];
     meno[strcspn(meno, "\n")] = 0;
+    f = fopen("/tmp/PosSemTest/contacts.txt", "r");
     while(!feof(f)) {
+        bzero(fileMeno, 20);
         fscanf(f, "%s", fileMeno);
         if (strncmp(fileMeno, meno, strlen(meno)) == 0) {
             while (1==1) {
-                bzero(fileMeno, 50);
+                bzero(fileMeno, 20);
                 fscanf(f, "%s", fileMeno);
-                if (strncmp(fileMeno, "X", 1) != 0) {
-                    if (strcspn(fileMeno, "#") == ((int)strlen(fileMeno)-1)) {
-                        fileMeno[strcspn(fileMeno, "#")] = 0;
+                if (strncmp(fileMeno, "#", 1) != 0) {
+                    if (strcspn(fileMeno, "%") == ((int)strlen(fileMeno)-1)) {
+                        fileMeno[strcspn(fileMeno, "%")] = 0;
                         strcat(fileMeno, " je nepotvrdeny");
                     }
                     n = write(newsockfd, fileMeno, strlen(fileMeno) + 1);
@@ -225,7 +214,7 @@ void getContacts(char meno[], int newsockfd) {
             }
             break;
         }
-        fgets(trash, 1024, f);
+        fgets(kontakty, 1024, f);
     }
     fclose(f);
 }
@@ -234,29 +223,28 @@ int findContact(char meno[], char kontaktovany[]) {
     FILE *f;
     int found = 2;
     f = fopen("/tmp/PosSemTest/contacts.txt", "r");
-    char fileMeno[50];
-    bzero(fileMeno, 50);
-    char trash[1024];
+    char fileMeno[20];
+    char kontakty[1024];
     meno[strcspn(meno, "\n")] = 0;
     kontaktovany[strcspn(kontaktovany, "\n")] = 0;
     while(!feof(f)) {
+        bzero(fileMeno, 20);
         fscanf(f, "%s", fileMeno);
         if (strncmp(fileMeno, meno, strlen(meno)) == 0) {
-            printf("Našiel som usera");
             while (1==1) {
-                bzero(fileMeno, 50);
+                bzero(fileMeno, 20);
                 fscanf(f, "%s", fileMeno);
-                if (strncmp(fileMeno, kontaktovany, 50) == 0) {
+                if (strncmp(fileMeno, kontaktovany, strlen(kontaktovany)) == 0) {
                     found = 1;
                     break;
-                } else if (strncmp(fileMeno, "X", 1) == 0){
+                } else if (strncmp(fileMeno, "#", 1) == 0){
                     found = 0;
                     break;
                 }
             }
             break;
         }
-        fgets(trash, 1024, f);
+        fgets(kontakty, 1024, f);
     }
     fclose(f);
     return found;
@@ -265,9 +253,7 @@ int findContact(char meno[], char kontaktovany[]) {
 void sendFriendRequest(char meno[], char kontaktovany[]) {
     FILE *f, *n;
     char kontakty[1024];
-    bzero(kontakty, 1024);
-    char fileMeno[50];
-    bzero(fileMeno, 50);
+    char fileMeno[20];
     char trash[1024];
     meno[strcspn(meno, "\n")] = 0;
     kontaktovany[strcspn(kontaktovany, "\n")] = 0;
@@ -275,15 +261,14 @@ void sendFriendRequest(char meno[], char kontaktovany[]) {
     f = fopen("/tmp/PosSemTest/contacts.txt", "r");
     n = fopen("/tmp/PosSemTest/contactsnew.txt", "w+");
     while(!feof(f)) {
-        bzero(fileMeno, 50);
+        bzero(fileMeno, 20);
         bzero(kontakty, 1024);
         fscanf(f, "%s", fileMeno);
         if (strncmp(fileMeno, "0", 1) == 0) {
             break;
         }
         if (strncmp(fileMeno, kontaktovany, strlen(meno)) == 0) {
-            printf("Našiel som usera");
-                strcat(meno, "#");
+                strcat(meno, "%");
                 fgets(kontakty, 1024, f);
                 fprintf(n, "%s %s %s", fileMeno, meno, kontakty);
         } else {
@@ -301,19 +286,20 @@ void getFriendRequests(char meno[], int newsockfd) {
     FILE *f;
     int n;
     f = fopen("/tmp/PosSemTest/contacts.txt", "r");
-    char fileMeno[50];
-    bzero(fileMeno, 50);
-    char trash[1024];
+    char fileMeno[20];
+    char kontakty[1024];
     meno[strcspn(meno, "\n")] = 0;
     while(!feof(f)) {
+        bzero(fileMeno, 20);
+        bzero(kontakty, 1024);
         fscanf(f, "%s", fileMeno);
         if (strncmp(fileMeno, meno, strlen(meno)) == 0) {
             while (1==1) {
-                bzero(fileMeno, 50);
+                bzero(fileMeno, 20);
                 fscanf(f, "%s", fileMeno);
-                if (strncmp(fileMeno, "X", 1) != 0) {
-                    if (strcspn(fileMeno, "#") == ((int)strlen(fileMeno)-1)) {
-                        fileMeno[strcspn(fileMeno, "#")] = 0;
+                if (strncmp(fileMeno, "#", 1) != 0) {
+                    if (strcspn(fileMeno, "%") == ((int)strlen(fileMeno)-1)) {
+                        fileMeno[strcspn(fileMeno, "%")] = 0;
                         n = write(newsockfd, fileMeno, strlen(fileMeno) + 1);
                         usleep(5);
                     }
@@ -325,7 +311,7 @@ void getFriendRequests(char meno[], int newsockfd) {
             }
             break;
         }
-        fgets(trash, 1024, f);
+        fgets(kontakty, 1024, f);
     }
     fclose(f);
 }
@@ -333,18 +319,16 @@ void getFriendRequests(char meno[], int newsockfd) {
 void confirmFriendRequest(char meno[], char kontaktovany[]) {
     FILE *f, *n;
     char kontakty[1024];
-    char kontaktProfile[50];
-    bzero(kontakty, 1024);
-    char fileMeno[50];
-    bzero(fileMeno, 50);
+    char kontaktProfile[20];
+    char fileMeno[20];
     meno[strcspn(meno, "\n")] = 0;
     kontaktovany[strcspn(kontaktovany, "\n")] = 0;
     strcpy(kontaktProfile, kontaktovany);
-    strcat(kontaktovany, "#");
+    strcat(kontaktovany, "%");
     f = fopen("/tmp/PosSemTest/contacts.txt", "r");
     n = fopen("/tmp/PosSemTest/contactsnew.txt", "w+");
     while(!feof(f)) {
-        bzero(fileMeno, 50);
+        bzero(fileMeno, 20);
         bzero(kontakty, 1024);
         fscanf(f, "%s", fileMeno);
         fprintf(n,"%s ", fileMeno);
@@ -354,11 +338,12 @@ void confirmFriendRequest(char meno[], char kontaktovany[]) {
         if (strncmp(fileMeno, meno, strlen(meno)) == 0) {
             printf("Našiel som usera");
             while (1 == 1) {
+                bzero(fileMeno, 20);
                 fscanf(f, "%s", fileMeno);
-                if (strncmp(fileMeno, "X", 1) != 0) {
-                    if (strcspn(fileMeno, "#") == ((int) strlen(fileMeno) - 1)) {
+                if (strncmp(fileMeno, "#", 1) != 0) {
+                    if (strcspn(fileMeno, "%") == ((int) strlen(fileMeno) - 1)) {
                         if (strncmp(fileMeno, kontaktovany, strlen(kontaktovany)) == 0) {
-                            fileMeno[strcspn(fileMeno, "#")] = 0;
+                            fileMeno[strcspn(fileMeno, "%")] = 0;
                         }
                     }
                     fprintf(n, "%s ", fileMeno);
@@ -373,7 +358,7 @@ void confirmFriendRequest(char meno[], char kontaktovany[]) {
             fprintf(n, "%s %s", meno, kontakty);
         } else {
             fgets(kontakty, 1024, f);
-            fprintf(n, "%s ", kontakty);
+            fprintf(n, "%s", kontakty);
         }
     }
     fclose(f);
@@ -385,15 +370,13 @@ void confirmFriendRequest(char meno[], char kontaktovany[]) {
 void removeFriend(char meno[], char kontaktovany[]) {
     FILE *f, *n;
     char kontakty[1024];
-    bzero(kontakty, 1024);
-    char fileMeno[50];
-    bzero(fileMeno, 50);
+    char fileMeno[20];
     meno[strcspn(meno, "\n")] = 0;
     kontaktovany[strcspn(kontaktovany, "\n")] = 0;
     f = fopen("/tmp/PosSemTest/contacts.txt", "r");
     n = fopen("/tmp/PosSemTest/contactsnew.txt", "w+");
     while(!feof(f)) {
-        bzero(fileMeno, 50);
+        bzero(fileMeno, 20);
         bzero(kontakty, 1024);
         fscanf(f, "%s", fileMeno);
         fprintf(n,"%s ", fileMeno);
@@ -401,10 +384,10 @@ void removeFriend(char meno[], char kontaktovany[]) {
             break;
         }
         if (strncmp(fileMeno, meno, strlen(meno)) == 0) {
-            printf("Našiel som usera");
             while (1 == 1) {
+                bzero(fileMeno, 20);
                 fscanf(f, "%s", fileMeno);
-                if (strncmp(fileMeno, "X", 1) != 0) {
+                if (strncmp(fileMeno, "#", 1) != 0) {
                         if (strncmp(fileMeno, kontaktovany, strlen(kontaktovany)) != 0) {
                             fprintf(n, "%s ", fileMeno);
                         }
@@ -416,8 +399,9 @@ void removeFriend(char meno[], char kontaktovany[]) {
             }
         } else if(strncmp(fileMeno, kontaktovany, strlen(kontaktovany))==0) {
             while (1 == 1) {
+                bzero(fileMeno, 20);
                 fscanf(f, "%s", fileMeno);
-                if (strncmp(fileMeno, "X", 1) != 0) {
+                if (strncmp(fileMeno, "#", 1) != 0) {
                     if (strncmp(fileMeno, meno, strlen(meno) != 0)) {
                         fprintf(n, "%s ", fileMeno);
                     }
@@ -429,7 +413,7 @@ void removeFriend(char meno[], char kontaktovany[]) {
             }
         } else {
             fgets(kontakty, 1024, f);
-            fprintf(n, "%s ", kontakty);
+            fprintf(n, "%s", kontakty);
             fprintf(n, "\n");
         }
     }
@@ -458,17 +442,16 @@ void readMessages(char meno[], char kontaktovany[], int newsockfd) {
     FILE *f;
     int n;
     f = fopen("/tmp/PosSemTest/messages.txt", "r");
-    char fileMeno[50];
+    char fileMeno[20];
     char message[256];
     meno[strcspn(meno, "\n")] = 0;
     kontaktovany[strcspn(kontaktovany, "\n")] = 0;
     while(!feof(f)) {
-        bzero(fileMeno, 50);
+        bzero(fileMeno, 20);
         bzero(message, 256);
         fscanf(f, "%s", fileMeno);
         if (strncmp(fileMeno, meno, strlen(meno)) == 0) {
-            printf("Našiel som");
-                bzero(fileMeno, 50);
+                bzero(fileMeno, 20);
                 fscanf(f, "%s", fileMeno);
                 if (strncmp(fileMeno, kontaktovany, strlen(kontaktovany)) == 0) {
                     fgets(message, 256, f);
@@ -480,7 +463,7 @@ void readMessages(char meno[], char kontaktovany[], int newsockfd) {
                     fgets(message, 256, f);
                 }
         } else if (strncmp(fileMeno, kontaktovany, strlen(kontaktovany)) == 0) {
-            bzero(fileMeno, 50);
+            bzero(fileMeno, 20);
             fscanf(f, "%s", fileMeno);
             if (strncmp(fileMeno, meno, strlen(meno)) == 0) {
                 fgets(message, 256, f);
@@ -503,14 +486,14 @@ void readMessages(char meno[], char kontaktovany[], int newsockfd) {
 
 int createGroupChat(char meno[], char groupName[]) {
     char members[1024];
-    char groupID[50];
+    char groupID[20];
     groupName[strcspn(groupName, "\n")] = 0;
     meno[strcspn(meno, "\n")] = 0;
-    bzero(members,1024);
-    bzero(groupID, 50);
     FILE *f;
     f = fopen("/tmp/PosSemTest/groupChatContacts.txt", "r");
     while(!feof(f)) {
+        bzero(members,1024);
+        bzero(groupID, 20);
         fscanf(f, "%s", groupID);
         if(strncmp(groupID, groupName, strlen(groupName))==0) {
             return 2;
@@ -526,20 +509,21 @@ int createGroupChat(char meno[], char groupName[]) {
 
 int addToGroupChat(char meno[], char pridany[], char groupName[]) {
     char members[1024];
-    char member[50];
-    char groupID[50];
+    char member[20];
+    char groupID[20];
     int found;
     groupName[strcspn(groupName, "\n")] = 0;
     meno[strcspn(meno, "\n")] = 0;
     pridany[strcspn(pridany, "\n")] = 0;
-    bzero(groupID, 50);
     FILE *f, *n;
     f = fopen("/tmp/PosSemTest/groupChatContacts.txt", "r");
     while(!feof(f)) {
+        bzero(groupID, 20);
         bzero(members,1024);
         fscanf(f, "%s", groupID);
         if(strncmp(groupID, groupName, strlen(groupID))==0) {
             while(1 == 1) {
+                bzero(member,20);
                 fscanf(f, "%s", member);
                 if(strncmp(member, pridany, strlen(member)) == 0) {
                     return 2;
@@ -556,6 +540,8 @@ int addToGroupChat(char meno[], char pridany[], char groupName[]) {
     f = fopen("/tmp/PosSemTest/groupChatContacts.txt", "r");
     n = fopen("/tmp/PosSemTest/groupChatContactsnew.txt", "w+");
     while(!feof(f)) {
+        bzero(groupID, 20);
+        bzero(members,1024);
         fscanf(f, "%s", groupID);
         fprintf(n, "%s ", groupID);
         if(strncmp(groupID, groupName, strlen(groupID))==0) {
@@ -574,21 +560,21 @@ int addToGroupChat(char meno[], char pridany[], char groupName[]) {
 }
 
 int checkGroup(char meno[], char groupName[]) {
-    char member[50];
+    char member[20];
     char others[1024];
-    char groupID[50];
+    char groupID[20];
     int found = 99;
     groupName[strcspn(groupName, "\n")] = 0;
     meno[strcspn(meno, "\n")] = 0;
-    bzero(member,50);
-    bzero(groupID, 50);
     FILE *f;
     f = fopen("/tmp/PosSemTest/groupChatContacts.txt", "r");
     while(!feof(f)) {
-        bzero(groupID,50);
+        bzero(groupID,20);
         fscanf(f, "%s", groupID);
         if(strncmp(groupID, groupName, strlen(groupID))==0) {
             while(1==1) {
+
+                bzero(member,20);
                 fscanf(f, "%s", member);
                 if(strncmp(member, meno, strlen(meno))==0){
                     found = 1;
@@ -601,6 +587,7 @@ int checkGroup(char meno[], char groupName[]) {
                 }
             }
         } else {
+            bzero(others, 1024);
             fgets(others, 1024, f);
         }
     }
@@ -622,18 +609,18 @@ int sendGroupMessage(char meno[], char groupName[], char message[]) {
 
 void readGroupMessages(char meno[], char groupName[], int newsockfd) {
     char message[256];
-    char groupID[50];
-    char fileMeno[50];
+    char groupID[20];
+    char fileMeno[20];
     int found, n;
     groupName[strcspn(groupName, "\n")] = 0;
     meno[strcspn(meno, "\n")] = 0;
-    bzero(message,256);
-    bzero(groupID, 50);
-    bzero(fileMeno, 50);
     if (checkGroup(meno, groupName)==1) {
         FILE *f;
         f = fopen("/tmp/PosSemTest/groupChatMessages.txt", "r");
         while(!feof(f)) {
+            bzero(message,256);
+            bzero(groupID, 20);
+            bzero(fileMeno, 20);
             fscanf(f, "%s ", groupID);
             if(strncmp(groupID, groupName, strlen(groupID))==0) {
                 fscanf(f, "%s ", fileMeno);
@@ -648,10 +635,6 @@ void readGroupMessages(char meno[], char groupName[], int newsockfd) {
             }
         }
         fclose(f);
-    } else {
-        bzero(message, 256);
-        strcpy(message, "Done");
-        n = write(newsockfd, message, strlen(message));
     }
     bzero(message, 256);
     strcpy(message, "Done");
@@ -659,19 +642,19 @@ void readGroupMessages(char meno[], char groupName[], int newsockfd) {
 }
 
 void getGroupchats(char meno[], int newsockfd) {
-    char member[50];
-    char groupID[50];
+    char member[20];
+    char groupID[20];
     int n;
     meno[strcspn(meno, "\n")] = 0;
     FILE *f;
     f = fopen("/tmp/PosSemTest/groupChatContacts.txt", "r");
     while(!feof(f)) {
-        bzero(member,50);
-        bzero(groupID, 50);
+        bzero(member,20);
+        bzero(groupID, 20);
         fscanf(f, "%s", groupID);
         if (strncmp(groupID, "0", 1) != 0) {
-            while (1 == 1) {
-                bzero(member,50);
+            while (1==1) {
+                bzero(member,20);
                 fscanf(f, "%s", member);
                 if (strncmp(member, meno, strlen(meno)) == 0) {
                     n = write(newsockfd, groupID, strlen(groupID));
@@ -687,7 +670,7 @@ void getGroupchats(char meno[], int newsockfd) {
         }
     }
     fclose(f);
-    bzero(groupID, 50);
+    bzero(groupID, 20);
     strcpy(groupID, "Done");
     n = write(newsockfd, groupID, strlen(groupID));
 }
@@ -695,7 +678,6 @@ void getGroupchats(char meno[], int newsockfd) {
 void *userInteraction(int newsockfd) {
     int n;
     char buffer[256];
-    char messenger[256];
     char vyzva[50];
     char search[50];
     bzero(buffer, 256);
@@ -718,7 +700,6 @@ void *userInteraction(int newsockfd) {
                 bzero(meno, 50);
                 strcpy(meno, buffer);
                 strcpy(username, buffer);
-                printf("%s \n", meno);
                 bzero(buffer, 256);
                 bzero(vyzva, 50);
                 strcpy(vyzva, "Heslo: ");
@@ -727,7 +708,6 @@ void *userInteraction(int newsockfd) {
                 char heslo[50];
                 bzero(heslo, 50);
                 strcpy(heslo, buffer);
-                printf("%s \n", heslo);
                 logged = login(meno, heslo);
                 if (logged == 0) {
                     strcpy(vyzva, "Uzivatel nenajdeny: ");
@@ -746,7 +726,6 @@ void *userInteraction(int newsockfd) {
                 bzero(meno, 50);
                 strcpy(meno, buffer);
                 strcpy(username, buffer);
-                printf("%s \n", meno);
                 int a = 10;
                 bzero(buffer, 256);
                 bzero(vyzva, 50);
@@ -756,7 +735,6 @@ void *userInteraction(int newsockfd) {
                 char heslo[50];
                 bzero(heslo, 50);
                 strcpy(heslo, buffer);
-                printf("%s \n", heslo);
                 if (checkName(meno) == 0) {
                     addUser(meno, heslo);
                     logged = login(meno, heslo);
@@ -913,12 +891,7 @@ int main(int argc, char *argv[])
     struct sockaddr_in serv_addr, cli_addr;
     int n;
     char buffer[256];
-/*
-    char kkk[200];
-    strcpy(kkk,"JanoX");
-    kkk[strcspn(kkk, "X")] = 0;
-    strcat(kkk, " je nepotvrdeny");
-    printf("%s", kkk);*/
+    pthread_mutex_init(&mutex, NULL);
 
     if (argc < 2)
     {
@@ -962,11 +935,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-
-
-/*
-        for (int i = 0; buffer[i] != '\0'; ++i) {
-            buffer[i] += 3;
-        }
-        printf("Here is caesar message: %s\n", buffer);
-        */
