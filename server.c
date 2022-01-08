@@ -53,6 +53,7 @@ int login(char meno[], char heslo[]) {
     char fileHeslo[20];
     meno[strcspn(meno, "\n")] = 0;
     heslo[strcspn(heslo, "\n")] = 0;
+    pthread_mutex_lock(&mutex);
     f = fopen("/tmp/PosSemTest/login.txt", "r");
     while(!feof(f)) {
         bzero(fileMeno, 20);
@@ -67,14 +68,17 @@ int login(char meno[], char heslo[]) {
         }
     }
     fclose(f);
+    pthread_mutex_unlock(&mutex);
     return found;
 }
 
 void sendNotification(char meno[], char message[]) {
     FILE *f;
+    pthread_mutex_lock(&mutex);
     f = fopen("/tmp/PosSemTest/contactNotifications.txt", "a");
     fprintf(f, "%s %s", meno, message);
     fclose(f);
+    pthread_mutex_unlock(&mutex);
 }
 
 void readNotification(char meno[], int newsockfd) {
@@ -83,6 +87,7 @@ void readNotification(char meno[], int newsockfd) {
     char message[256];
     int n;
     meno[strcspn(meno, "\n")] = 0;
+    pthread_mutex_lock(&mutex);
     f = fopen("/tmp/PosSemTest/contactNotifications.txt", "r");
     while(!feof(f)) {
         bzero(fileMeno, 20);
@@ -94,6 +99,7 @@ void readNotification(char meno[], int newsockfd) {
         }
     }
     fclose(f);
+    pthread_mutex_unlock(&mutex);
     strcpy(message, "Done");
     n = write(newsockfd, message, 255);
 }
@@ -105,6 +111,7 @@ int checkName(char meno[]) {
     char fileMeno[20];
     char fileHeslo[20];
     meno[strcspn(meno, "\n")] = 0;
+    pthread_mutex_lock(&mutex);
     f = fopen("/tmp/PosSemTest/login.txt", "r");
     while(!feof(f)) {
         bzero(fileMeno, 20);
@@ -117,20 +124,24 @@ int checkName(char meno[]) {
         }
     }
     fclose(f);
+    pthread_mutex_lock(&mutex);
     return found;
 }
 
 void addUser(char meno[], char heslo[]) {
     FILE *f;
+    pthread_mutex_lock(&mutex);
     f = fopen("/tmp/PosSemTest/login.txt", "a");
     fprintf(f, "%s %s", meno, heslo);
     fclose(f);
+    pthread_mutex_unlock(&mutex);
 
+    pthread_mutex_lock(&mutex);
     f = fopen("/tmp/PosSemTest/contacts.txt", "a");
     fprintf(f, "%s #", meno);
     fprintf(f, "\n");
     fclose(f);
-
+    pthread_mutex_unlock(&mutex);
 }
 
 void removeUser(char meno[]) {
@@ -138,6 +149,7 @@ void removeUser(char meno[]) {
     char fileHeslo[20];
     meno[strcspn(meno, "\n")] = 0;
     FILE *f, *n;
+    pthread_mutex_lock(&mutex);
     f = fopen("/tmp/PosSemTest/login.txt", "r");
     n = fopen("/tmp/PosSemTest/loginnew.txt", "w+");
     while(!feof(f)) {
@@ -160,8 +172,10 @@ void removeUser(char meno[]) {
     fclose(n);
     remove("/tmp/PosSemTest/login.txt");
     rename("/tmp/PosSemTest/loginnew.txt", "/tmp/PosSemTest/login.txt");
+    pthread_mutex_unlock(&mutex);
 
     char kontakty[1024];
+    pthread_mutex_lock(&mutex);
     f = fopen("/tmp/PosSemTest/contacts.txt", "r");
     n = fopen("/tmp/PosSemTest/contactsnew.txt", "w+");
     while(!feof(f)) {
@@ -183,6 +197,7 @@ void removeUser(char meno[]) {
     fclose(n);
     remove("/tmp/PosSemTest/contacts.txt");
     rename("/tmp/PosSemTest/contactsnew.txt", "/tmp/PosSemTest/contacts.txt");
+    pthread_mutex_unlock(&mutex);
 }
 
 void getContacts(char meno[], int newsockfd) {
@@ -191,6 +206,7 @@ void getContacts(char meno[], int newsockfd) {
     char fileMeno[20];
     char kontakty[1024];
     meno[strcspn(meno, "\n")] = 0;
+    pthread_mutex_lock(&mutex);
     f = fopen("/tmp/PosSemTest/contacts.txt", "r");
     while(!feof(f)) {
         bzero(fileMeno, 20);
@@ -217,18 +233,21 @@ void getContacts(char meno[], int newsockfd) {
         fgets(kontakty, 1024, f);
     }
     fclose(f);
+    pthread_mutex_unlock(&mutex);
 }
 
 int findContact(char meno[], char kontaktovany[]) {
     FILE *f;
     int found = 2;
-    f = fopen("/tmp/PosSemTest/contacts.txt", "r");
     char fileMeno[20];
     char kontakty[1024];
     meno[strcspn(meno, "\n")] = 0;
     kontaktovany[strcspn(kontaktovany, "\n")] = 0;
+    pthread_mutex_lock(&mutex);
+    f = fopen("/tmp/PosSemTest/contacts.txt", "r");
     while(!feof(f)) {
         bzero(fileMeno, 20);
+        bzero(kontakty, 1024);
         fscanf(f, "%s", fileMeno);
         if (strncmp(fileMeno, meno, strlen(meno)) == 0) {
             while (1==1) {
@@ -247,6 +266,7 @@ int findContact(char meno[], char kontaktovany[]) {
         fgets(kontakty, 1024, f);
     }
     fclose(f);
+    pthread_mutex_unlock(&mutex);
     return found;
 }
 
@@ -254,10 +274,9 @@ void sendFriendRequest(char meno[], char kontaktovany[]) {
     FILE *f, *n;
     char kontakty[1024];
     char fileMeno[20];
-    char trash[1024];
     meno[strcspn(meno, "\n")] = 0;
     kontaktovany[strcspn(kontaktovany, "\n")] = 0;
-
+    pthread_mutex_lock(&mutex);
     f = fopen("/tmp/PosSemTest/contacts.txt", "r");
     n = fopen("/tmp/PosSemTest/contactsnew.txt", "w+");
     while(!feof(f)) {
@@ -280,15 +299,17 @@ void sendFriendRequest(char meno[], char kontaktovany[]) {
     fclose(n);
     remove("/tmp/PosSemTest/contacts.txt");
     rename("/tmp/PosSemTest/contactsnew.txt", "/tmp/PosSemTest/contacts.txt");
+    pthread_mutex_unlock(&mutex);
 }
 
 void getFriendRequests(char meno[], int newsockfd) {
     FILE *f;
     int n;
-    f = fopen("/tmp/PosSemTest/contacts.txt", "r");
     char fileMeno[20];
     char kontakty[1024];
     meno[strcspn(meno, "\n")] = 0;
+    pthread_mutex_lock(&mutex);
+    f = fopen("/tmp/PosSemTest/contacts.txt", "r");
     while(!feof(f)) {
         bzero(fileMeno, 20);
         bzero(kontakty, 1024);
@@ -314,6 +335,7 @@ void getFriendRequests(char meno[], int newsockfd) {
         fgets(kontakty, 1024, f);
     }
     fclose(f);
+    pthread_mutex_unlock(&mutex);
 }
 
 void confirmFriendRequest(char meno[], char kontaktovany[]) {
@@ -325,6 +347,7 @@ void confirmFriendRequest(char meno[], char kontaktovany[]) {
     kontaktovany[strcspn(kontaktovany, "\n")] = 0;
     strcpy(kontaktProfile, kontaktovany);
     strcat(kontaktovany, "%");
+    pthread_mutex_lock(&mutex);
     f = fopen("/tmp/PosSemTest/contacts.txt", "r");
     n = fopen("/tmp/PosSemTest/contactsnew.txt", "w+");
     while(!feof(f)) {
@@ -365,6 +388,7 @@ void confirmFriendRequest(char meno[], char kontaktovany[]) {
     fclose(n);
     remove("/tmp/PosSemTest/contacts.txt");
     rename("/tmp/PosSemTest/contactsnew.txt", "/tmp/PosSemTest/contacts.txt");
+    pthread_mutex_unlock(&mutex);
 }
 
 void removeFriend(char meno[], char kontaktovany[]) {
@@ -373,6 +397,7 @@ void removeFriend(char meno[], char kontaktovany[]) {
     char fileMeno[20];
     meno[strcspn(meno, "\n")] = 0;
     kontaktovany[strcspn(kontaktovany, "\n")] = 0;
+    pthread_mutex_lock(&mutex);
     f = fopen("/tmp/PosSemTest/contacts.txt", "r");
     n = fopen("/tmp/PosSemTest/contactsnew.txt", "w+");
     while(!feof(f)) {
@@ -421,6 +446,7 @@ void removeFriend(char meno[], char kontaktovany[]) {
     fclose(n);
     remove("/tmp/PosSemTest/contacts.txt");
     rename("/tmp/PosSemTest/contactsnew.txt", "/tmp/PosSemTest/contacts.txt");
+    pthread_mutex_unlock(&mutex);
     char message[256];
     bzero(message, 256);
     strcpy(message, "Pouzivatel ");
@@ -433,19 +459,23 @@ void sendMessage(char meno[], char kontaktovany[], char message[]) {
     kontaktovany[strcspn(kontaktovany, "\n")] = 0;
     meno[strcspn(meno, "\n")] = 0;
     FILE *f;
+    pthread_mutex_lock(&mutex);
     f = fopen("/tmp/PosSemTest/messages.txt", "a");
     fprintf(f, "%s %s %s", kontaktovany, meno, message);
+    fprintf(f, "\n");
     fclose(f);
+    pthread_mutex_unlock(&mutex);
 }
 
 void readMessages(char meno[], char kontaktovany[], int newsockfd) {
     FILE *f;
     int n;
-    f = fopen("/tmp/PosSemTest/messages.txt", "r");
     char fileMeno[20];
     char message[256];
     meno[strcspn(meno, "\n")] = 0;
     kontaktovany[strcspn(kontaktovany, "\n")] = 0;
+    pthread_mutex_lock(&mutex);
+    f = fopen("/tmp/PosSemTest/messages.txt", "r");
     while(!feof(f)) {
         bzero(fileMeno, 20);
         bzero(message, 256);
@@ -482,6 +512,7 @@ void readMessages(char meno[], char kontaktovany[], int newsockfd) {
     strcpy(fileMeno, "Done");
     n = write(newsockfd, fileMeno, strlen(fileMeno) + 1);
     fclose(f);
+    pthread_mutex_unlock(&mutex);
 }
 
 int createGroupChat(char meno[], char groupName[]) {
@@ -490,6 +521,7 @@ int createGroupChat(char meno[], char groupName[]) {
     groupName[strcspn(groupName, "\n")] = 0;
     meno[strcspn(meno, "\n")] = 0;
     FILE *f;
+    pthread_mutex_lock(&mutex);
     f = fopen("/tmp/PosSemTest/groupChatContacts.txt", "r");
     while(!feof(f)) {
         bzero(members,1024);
@@ -504,6 +536,7 @@ int createGroupChat(char meno[], char groupName[]) {
     f = fopen("/tmp/PosSemTest/groupChatContacts.txt", "a");
     fprintf(f, "%s %s #", groupName, meno);
     fclose(f);
+    pthread_mutex_unlock(&mutex);
     return 0;
 }
 
@@ -516,6 +549,7 @@ int addToGroupChat(char meno[], char pridany[], char groupName[]) {
     meno[strcspn(meno, "\n")] = 0;
     pridany[strcspn(pridany, "\n")] = 0;
     FILE *f, *n;
+    pthread_mutex_lock(&mutex);
     f = fopen("/tmp/PosSemTest/groupChatContacts.txt", "r");
     while(!feof(f)) {
         bzero(groupID, 20);
@@ -556,6 +590,7 @@ int addToGroupChat(char meno[], char pridany[], char groupName[]) {
     fclose(n);
     remove("/tmp/PosSemTest/groupChatContacts.txt");
     rename("/tmp/PosSemTest/groupChatContactsnew.txt", "/tmp/PosSemTest/groupChatContacts.txt");
+    pthread_mutex_unlock(&mutex);
     return 0;
 }
 
@@ -567,6 +602,7 @@ int checkGroup(char meno[], char groupName[]) {
     groupName[strcspn(groupName, "\n")] = 0;
     meno[strcspn(meno, "\n")] = 0;
     FILE *f;
+    pthread_mutex_lock(&mutex);
     f = fopen("/tmp/PosSemTest/groupChatContacts.txt", "r");
     while(!feof(f)) {
         bzero(groupID,20);
@@ -592,15 +628,18 @@ int checkGroup(char meno[], char groupName[]) {
         }
     }
     fclose(f);
+    pthread_mutex_unlock(&mutex);
     return found;
 }
 
 int sendGroupMessage(char meno[], char groupName[], char message[]) {
     if (checkGroup(meno, groupName)==1) {
         FILE *f;
+        pthread_mutex_lock(&mutex);
         f = fopen("/tmp/PosSemTest/groupChatMessages.txt", "a");
         fprintf(f, "%s %s %s", groupName, meno, message);
         fclose(f);
+        pthread_mutex_unlock(&mutex);
         return 0;
     } else {
         return 1;
@@ -611,7 +650,7 @@ void readGroupMessages(char meno[], char groupName[], int newsockfd) {
     char message[256];
     char groupID[20];
     char fileMeno[20];
-    int found, n;
+    int n;
     groupName[strcspn(groupName, "\n")] = 0;
     meno[strcspn(meno, "\n")] = 0;
     if (checkGroup(meno, groupName)==1) {
@@ -647,6 +686,7 @@ void getGroupchats(char meno[], int newsockfd) {
     int n;
     meno[strcspn(meno, "\n")] = 0;
     FILE *f;
+    pthread_mutex_lock(&mutex);
     f = fopen("/tmp/PosSemTest/groupChatContacts.txt", "r");
     while(!feof(f)) {
         bzero(member,20);
@@ -670,20 +710,22 @@ void getGroupchats(char meno[], int newsockfd) {
         }
     }
     fclose(f);
+    pthread_mutex_unlock(&mutex);
     bzero(groupID, 20);
     strcpy(groupID, "Done");
     n = write(newsockfd, groupID, strlen(groupID));
 }
 
-void *userInteraction(int newsockfd) {
+void *userInteraction(void* arg) {
     int n;
+    int newsockfd = *((int* ) arg);
     char buffer[256];
     char vyzva[50];
-    char search[50];
+    char search[20];
     bzero(buffer, 256);
     int logged = 0;
     int action = 0;
-    char username[50];
+    char username[20];
     int on = 1;
     while(on==1) {
         //login/register
@@ -696,8 +738,8 @@ void *userInteraction(int newsockfd) {
                 n = write(newsockfd, vyzva, strlen(vyzva) + 1);
                 bzero(buffer, 256);
                 n = read(newsockfd, buffer, 255);
-                char meno[50];
-                bzero(meno, 50);
+                char meno[20];
+                bzero(meno, 20);
                 strcpy(meno, buffer);
                 strcpy(username, buffer);
                 bzero(buffer, 256);
@@ -705,8 +747,8 @@ void *userInteraction(int newsockfd) {
                 strcpy(vyzva, "Heslo: ");
                 n = write(newsockfd, vyzva, strlen(vyzva) + 1);
                 n = read(newsockfd, buffer, 255);
-                char heslo[50];
-                bzero(heslo, 50);
+                char heslo[20];
+                bzero(heslo, 20);
                 strcpy(heslo, buffer);
                 logged = login(meno, heslo);
                 if (logged == 0) {
@@ -722,8 +764,8 @@ void *userInteraction(int newsockfd) {
                 strcpy(vyzva, "Zadajte meno: ");
                 n = write(newsockfd, vyzva, strlen(vyzva) + 1);
                 n = read(newsockfd, buffer, 255);
-                char meno[50];
-                bzero(meno, 50);
+                char meno[20];
+                bzero(meno, 20);
                 strcpy(meno, buffer);
                 strcpy(username, buffer);
                 int a = 10;
@@ -732,8 +774,8 @@ void *userInteraction(int newsockfd) {
                 strcpy(vyzva, "Zadajte heslo: ");
                 n = write(newsockfd, vyzva, strlen(vyzva) + 1);
                 n = read(newsockfd, buffer, 255);
-                char heslo[50];
-                bzero(heslo, 50);
+                char heslo[20];
+                bzero(heslo, 20);
                 strcpy(heslo, buffer);
                 if (checkName(meno) == 0) {
                     addUser(meno, heslo);
@@ -751,13 +793,9 @@ void *userInteraction(int newsockfd) {
         while (logged == 1) {
             bzero(buffer, 256);
             n = read(newsockfd, buffer, 255);
-            if (n < 0) {
-                perror("Error reading from socket");
-                return 4;
-            }
             action = atoi(buffer);
             switch (action) {
-                case 1:
+                case 1://free writing
                     while (1 == 1) {
                         n = read(newsockfd, buffer, 255);
                         if (strncmp("end", buffer, 3) == 0) {
@@ -765,17 +803,12 @@ void *userInteraction(int newsockfd) {
                         }
                         const char *msg = "I got your message";
                         n = write(newsockfd, msg, strlen(msg) + 1);
-
-                        if (n < 0) {
-                            perror("Error writing to socket");
-                            return 5;
-                        }
                     }
                     break;
-                case 2:
+                case 2: //zobrazit kontakty
                     getContacts(username, newsockfd);
                     break;
-                case 3:
+                case 3: //poslat ziadost o priatelstvo
                     n = read(newsockfd, buffer, 255);
                     strcpy(search, buffer);
                     if (findContact(username, search) == 1) {
@@ -787,7 +820,7 @@ void *userInteraction(int newsockfd) {
                         n = write(newsockfd, buffer, strlen(buffer));
                     }
                     break;
-                case 4:
+                case 4: //potvrdit ziadost o priatelstvo
                     getFriendRequests(username, newsockfd);
                     bzero(buffer, 256);
                     n = read(newsockfd, buffer, 255);
@@ -795,24 +828,24 @@ void *userInteraction(int newsockfd) {
                         confirmFriendRequest(username, buffer);
                     }
                     break;
-                case 5:
+                case 5: //vymazat z priatelov
                     getContacts(username, newsockfd);
                     n = read(newsockfd, buffer, 255);
                     if(strncmp(buffer, "0", 1)!=0) {
                         removeFriend(username, buffer);
                     }
                     break;
-                case 6:
+                case 6: //notifikacie
                     readNotification(username, newsockfd);
                     break;
-                case 7:
+                case 7: //precitat spravy
                     getContacts(username, newsockfd);
                     n = read(newsockfd, buffer, 255);
                     if(strncmp(buffer, "0", 1)!=0) {
                         readMessages(username, buffer, newsockfd);
                     }
                     break;
-                case 8:
+                case 8: //napisat uzivatelovi
                     getContacts(username, newsockfd);
                     n = read(newsockfd, buffer, 255);
                     if(strncmp(buffer, "0", 1)!=0) {
@@ -821,31 +854,13 @@ void *userInteraction(int newsockfd) {
                         sendMessage(username, search, buffer);
                     }
                     break;
-                case 9:
-                    logged = 0;
-                    break;
-                case 10:
-                    removeUser(username);
-                    logged = 0;
-                    break;
-                case 11:
-                    logged = 0;
-                    on = 0;
-                    break;
-              /*  case 12:
-                    getContacts(username, newsockfd);
-                    n = read(newsockfd, buffer, 255);
-                    if(strncmp(buffer, "0", 1)!=0) {
-                        uploadFile(username, buffer, newsockfd);
-                    }
-                    break;*/
-                case 13:
+                case 9: //vytvorit skupinovy chat
                     n = read(newsockfd, buffer, 255);
                     n = createGroupChat(username, buffer);
                     buffer[0] = n;
                     n = write(newsockfd, buffer, strlen(buffer));
                     break;
-                case 14:
+                case 10: //pridat frienda do group chatu
                     getContacts(username, newsockfd);
                     n = read(newsockfd, buffer, 255);
                     strcpy(search, buffer);
@@ -860,7 +875,7 @@ void *userInteraction(int newsockfd) {
                     }
                     n = write(newsockfd, buffer, strlen(buffer));
                     break;
-                case 15:
+                case 11: //Napisat spravu skupine
                     getGroupchats(username, newsockfd);
                     usleep(5);
                     n = read(newsockfd, buffer, 255);
@@ -869,12 +884,23 @@ void *userInteraction(int newsockfd) {
                     n = read(newsockfd, buffer, 255);
                     sendGroupMessage(username, search, buffer);
                     break;
-                case 16:
+                case 12: //pozriet spravy zo skupiny
                     getGroupchats(username, newsockfd);
                     bzero(buffer, 256);
                     usleep(5);
                     n = read(newsockfd, buffer, 255);
                     readGroupMessages(username, buffer, newsockfd);
+                    break;
+                case 13: //odhlasit
+                    logged = 0;
+                    break;
+                case 14: //vypnut klienta
+                    logged = 0;
+                    on = 0;
+                    break;
+                case 99: //zrusit ucet
+                    removeUser(username);
+                    logged = 0;
                     break;
                 default:
                     break;
@@ -929,9 +955,17 @@ int main(int argc, char *argv[])
             return 3;
         }
         pthread_t client;
-        pthread_create(&client, NULL, &userInteraction, newsockfd);
+        pthread_create(&client, NULL, &userInteraction, &newsockfd);
     }
     close(sockfd);
 
     return 0;
 }
+
+/*  case 12:
+      getContacts(username, newsockfd);
+      n = read(newsockfd, buffer, 255);
+      if(strncmp(buffer, "0", 1)!=0) {
+          uploadFile(username, buffer, newsockfd);
+      }
+      break;*/
