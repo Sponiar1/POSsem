@@ -6,8 +6,32 @@
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
-
+#include "server.h"
 pthread_mutex_t mutex;
+/*
+void uploadfile(char name[], int newsockfd) {
+    int n;
+    FILE *f;
+    name[strcspn(name, "\n")] = 0;
+    char data[1024] = {0};
+    char path[512] = {0};
+    strcpy(path, "/tmp/PosSemTest/clientFiles/");
+    strcat(path, name);
+    f = fopen(name, "w+");
+    if(f==NULL) {
+        perror("Error creating file");
+    }
+    while(1) {
+        n = recv(newsockfd, data, 1024, 0);
+        if(strncmp(data, "END OF FILE", 11)==0) {
+            break;
+        }
+        fprintf(f, "%s", data);
+        bzero(data, 1024);
+    }
+    fclose(f);
+}
+*/
 /*
 int uploadFile(char meno[], char kontaktovany[], int newsockfd) {
     int n, maxFileSize;
@@ -19,7 +43,7 @@ int uploadFile(char meno[], char kontaktovany[], int newsockfd) {
     bzero(data, maxFileSize);
     maxFileSize = 5*1024*1024;
     strcpy(path, "Daj meno suboru");
-    n = write(newsockfd, path, strlen(path));
+    n = write(newsockfd, path, strlen(path));w
     strcpy(path, "/tmp/PosSemTest/clientFiles/");
 
     n = read(newsockfd, fileName, strlen(fileName));
@@ -59,9 +83,7 @@ int login(char meno[], char heslo[]) {
         bzero(fileMeno, 20);
         bzero(fileHeslo, 20);
         fscanf(f, "%s", fileMeno);
-        printf("%s \n", fileMeno);
         fscanf(f, "%s", fileHeslo);
-        printf("%s \n", fileHeslo);
         if (strncmp(fileMeno, meno, strlen(meno)) == 0 && (strncmp(fileHeslo, heslo, strlen(heslo))) == 0) {
             found = 1;
             break;
@@ -124,7 +146,7 @@ int checkName(char meno[]) {
         }
     }
     fclose(f);
-    pthread_mutex_lock(&mutex);
+    pthread_mutex_unlock(&mutex);
     return found;
 }
 
@@ -721,11 +743,14 @@ void *userInteraction(void* arg) {
     int newsockfd = *((int* ) arg);
     char buffer[256];
     char vyzva[50];
+    bzero(vyzva,50);
     char search[20];
+    bzero(search,20);
     bzero(buffer, 256);
     int logged = 0;
     int action = 0;
     char username[20];
+    bzero(username, 20);
     int on = 1;
     while(on==1) {
         //login/register
@@ -752,9 +777,11 @@ void *userInteraction(void* arg) {
                 strcpy(heslo, buffer);
                 logged = login(meno, heslo);
                 if (logged == 0) {
+                    bzero(vyzva, 50);
                     strcpy(vyzva, "Uzivatel nenajdeny: ");
                     n = write(newsockfd, vyzva, strlen(vyzva) + 1);
                 } else {
+                    bzero(vyzva, 50);
                     strcpy(vyzva, "Vitaj ");
                     strcat(vyzva, meno);
                     n = write(newsockfd, vyzva, strlen(vyzva) + 1);
@@ -763,6 +790,7 @@ void *userInteraction(void* arg) {
                 bzero(vyzva, 50);
                 strcpy(vyzva, "Zadajte meno: ");
                 n = write(newsockfd, vyzva, strlen(vyzva) + 1);
+                bzero(buffer, 256);
                 n = read(newsockfd, buffer, 255);
                 char meno[20];
                 bzero(meno, 20);
@@ -777,6 +805,7 @@ void *userInteraction(void* arg) {
                 char heslo[20];
                 bzero(heslo, 20);
                 strcpy(heslo, buffer);
+                bzero(vyzva,50);
                 if (checkName(meno) == 0) {
                     addUser(meno, heslo);
                     logged = login(meno, heslo);
@@ -797,6 +826,7 @@ void *userInteraction(void* arg) {
             switch (action) {
                 case 1://free writing
                     while (1 == 1) {
+                        bzero(buffer, 256);
                         n = read(newsockfd, buffer, 255);
                         if (strncmp("end", buffer, 3) == 0) {
                             break;
@@ -809,13 +839,17 @@ void *userInteraction(void* arg) {
                     getContacts(username, newsockfd);
                     break;
                 case 3: //poslat ziadost o priatelstvo
+                    bzero(buffer, 256);
                     n = read(newsockfd, buffer, 255);
+                    bzero(search, 20);
                     strcpy(search, buffer);
                     if (findContact(username, search) == 1) {
+                        bzero(buffer, 256);
                         strcpy(buffer,"Uzivatel uz je v kontaktoch\n");
                         n = write(newsockfd, buffer, strlen(buffer));
                     } else {
                         sendFriendRequest(username, search);
+                        bzero(buffer, 256);
                         strcpy(buffer,"Uzivatelovi bola poslana ziadost\n");
                         n = write(newsockfd, buffer, strlen(buffer));
                     }
@@ -830,6 +864,7 @@ void *userInteraction(void* arg) {
                     break;
                 case 5: //vymazat z priatelov
                     getContacts(username, newsockfd);
+                    bzero(buffer, 256);
                     n = read(newsockfd, buffer, 255);
                     if(strncmp(buffer, "0", 1)!=0) {
                         removeFriend(username, buffer);
@@ -840,6 +875,7 @@ void *userInteraction(void* arg) {
                     break;
                 case 7: //precitat spravy
                     getContacts(username, newsockfd);
+                    bzero(buffer, 256);
                     n = read(newsockfd, buffer, 255);
                     if(strncmp(buffer, "0", 1)!=0) {
                         readMessages(username, buffer, newsockfd);
@@ -847,14 +883,17 @@ void *userInteraction(void* arg) {
                     break;
                 case 8: //napisat uzivatelovi
                     getContacts(username, newsockfd);
+                    bzero(buffer, 256);
                     n = read(newsockfd, buffer, 255);
                     if(strncmp(buffer, "0", 1)!=0) {
                         strcpy(search, buffer);
+                        bzero(buffer, 256);
                         n = read(newsockfd, buffer, 255);
                         sendMessage(username, search, buffer);
                     }
                     break;
                 case 9: //vytvorit skupinovy chat
+                    bzero(buffer, 256);
                     n = read(newsockfd, buffer, 255);
                     n = createGroupChat(username, buffer);
                     buffer[0] = n;
@@ -862,9 +901,11 @@ void *userInteraction(void* arg) {
                     break;
                 case 10: //pridat frienda do group chatu
                     getContacts(username, newsockfd);
+                    bzero(buffer, 256);
                     n = read(newsockfd, buffer, 255);
                     strcpy(search, buffer);
                     getGroupchats(username, newsockfd);
+                    bzero(buffer, 256);
                     n = read(newsockfd, buffer, 255);
                     n = addToGroupChat(username, search, buffer);
                     bzero(buffer, 255);
@@ -878,9 +919,11 @@ void *userInteraction(void* arg) {
                 case 11: //Napisat spravu skupine
                     getGroupchats(username, newsockfd);
                     usleep(5);
+                    bzero(buffer, 256);
                     n = read(newsockfd, buffer, 255);
                     strcpy(search, buffer);
                     usleep(5);
+                    bzero(buffer, 256);
                     n = read(newsockfd, buffer, 255);
                     sendGroupMessage(username, search, buffer);
                     break;
@@ -969,3 +1012,10 @@ int main(int argc, char *argv[])
           uploadFile(username, buffer, newsockfd);
       }
       break;*/
+
+/*case 22:
+    bzero(buffer, 256);
+    n = read(newsockfd, buffer, 255);
+    printf("dostal som meno suboru");
+    uploadfile(buffer, newsockfd);
+    break;*/

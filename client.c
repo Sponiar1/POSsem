@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "client.h"
 //zakódovanie správy
 char* code(char message[]) {
     for (int i = 0; message[i] != '\0'; ++i) {
@@ -61,6 +62,27 @@ int sendFile(char nameOfFile[], int newsockfd) {
     return 0;
 }
 */
+/*void sendFile(char name[], int sockfd) {
+        char path[512];
+        char data[1024] = {0};
+        FILE *f;
+        name[strcspn(name, "\n")] = 0;
+        printf("som v posielani filu");
+        strcpy(path, "/tmp/PosSemTest/");
+        strcat(path, name);
+        printf("%s", path);
+        f = fopen(path, "r");
+        while(fgets(data, 1024, f)!=NULL) {
+            if(send(sockfd, data, sizeof(data), 0)==-1) {
+                perror("Error sending data");
+            }
+            bzero(data, 1024);
+        }
+        bzero(data, 1024);
+        strcpy(data, "END OF FILE");
+        send(sockfd, data, sizeof(data), 0);
+}*/
+
 int main(int argc, char *argv[])
 {
     int sockfd, n, logged;
@@ -628,4 +650,10 @@ int main(int argc, char *argv[])
                     int dobre = sendFile(buffer, sockfd);
                     printf("%d", dobre);
                 }
+                break;*/
+/* case 22:
+                bzero(buffer, 256);
+                fgets(buffer, 255, stdin);
+                n = write(sockfd, buffer, strlen(buffer));
+                sendFile(buffer, sockfd);
                 break;*/

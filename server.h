@@ -1,8 +1,7 @@
 #ifndef SEMKA_SERVER_H
 #define SEMKA_SERVER_H
 
-class server{
-public:
+
         int login(char meno[], char heslo[]);
         void sendNotification(char meno[], char message[]);
         void readNotification(char meno[], int newsockfd);
@@ -23,7 +22,6 @@ public:
         int sendGroupMessage(char meno[], char groupName[], char message[]);
         void readGroupMessages(char meno[], char groupName[], int newsockfd);
         void getGroupchats(char meno[], int newsockfd);
-        void *userInteraction(int newsockfd);
+        void *userInteraction(void* arg);
         int main(int argc, char *argv[]);
-};
 #endif //SEMKA_SERVER_H
