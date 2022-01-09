@@ -761,7 +761,7 @@ void *userInteraction(void* arg) {
                     break;
             }
         }
-
+//
         while (logged == 1) {
             bzero(buffer, 256);
             n = read(newsockfd, buffer, 255);
