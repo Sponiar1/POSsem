@@ -249,9 +249,9 @@ void sendFriendRequest(char meno[], char kontaktovany[]) {
             break;
         }
         if (strncmp(fileMeno, kontaktovany, strlen(meno)) == 0) {
-                strcat(meno, "%");
-                fgets(kontakty, 1024, f);
-                fprintf(n, "%s %s %s", fileMeno, meno, kontakty);
+            strcat(meno, "%");
+            fgets(kontakty, 1024, f);
+            fprintf(n, "%s %s %s", fileMeno, meno, kontakty);
         } else {
             fgets(kontakty, 1024, f);
             fprintf(n, "%s %s", fileMeno, kontakty);
@@ -375,9 +375,9 @@ void removeFriend(char meno[], char kontaktovany[]) {
                 bzero(fileMeno, 20);
                 fscanf(f, "%s", fileMeno);
                 if (strncmp(fileMeno, "#", 1) != 0) {
-                        if (strncmp(fileMeno, kontaktovany, strlen(kontaktovany)) != 0) {
-                            fprintf(n, "%s ", fileMeno);
-                        }
+                    if (strncmp(fileMeno, kontaktovany, strlen(kontaktovany)) != 0) {
+                        fprintf(n, "%s ", fileMeno);
+                    }
                 } else {
                     fprintf(n, "%s ", fileMeno);
                     fprintf(n, "\n");
@@ -443,17 +443,17 @@ void readMessages(char meno[], char kontaktovany[], int newsockfd) {
         bzero(message, 256);
         fscanf(f, "%s", fileMeno);
         if (strncmp(fileMeno, meno, strlen(meno)) == 0) {
-                bzero(fileMeno, 20);
-                fscanf(f, "%s", fileMeno);
-                if (strncmp(fileMeno, kontaktovany, strlen(kontaktovany)) == 0) {
-                    fgets(message, 256, f);
-                    n = write(newsockfd, fileMeno, strlen(fileMeno) + 1);
-                    usleep(5);
-                    n = write(newsockfd, message, 255);
-                    usleep(5);
-                } else {
-                    fgets(message, 256, f);
-                }
+            bzero(fileMeno, 20);
+            fscanf(f, "%s", fileMeno);
+            if (strncmp(fileMeno, kontaktovany, strlen(kontaktovany)) == 0) {
+                fgets(message, 256, f);
+                n = write(newsockfd, fileMeno, strlen(fileMeno) + 1);
+                usleep(5);
+                n = write(newsockfd, message, 255);
+                usleep(5);
+            } else {
+                fgets(message, 256, f);
+            }
         } else if (strncmp(fileMeno, kontaktovany, strlen(kontaktovany)) == 0) {
             bzero(fileMeno, 20);
             fscanf(f, "%s", fileMeno);
@@ -691,71 +691,74 @@ void *userInteraction(void* arg) {
     int action = 0;
     char username[20];
     bzero(username, 20);
+    char meno[20];
+    char heslo[20];
     int on = 1;
     while(on==1) {
         //login/register
         while (logged == 0) {
             bzero(buffer, 256);
             n = read(newsockfd, buffer, 255);
-            if (strncmp("1", buffer, 1) == 0) {
-                bzero(vyzva, 50);
-                strcpy(vyzva, "Meno: ");
-                n = write(newsockfd, vyzva, strlen(vyzva) + 1);
-                bzero(buffer, 256);
-                n = read(newsockfd, buffer, 255);
-                char meno[20];
-                bzero(meno, 20);
-                strcpy(meno, buffer);
-                strcpy(username, buffer);
-                bzero(buffer, 256);
-                bzero(vyzva, 50);
-                strcpy(vyzva, "Heslo: ");
-                n = write(newsockfd, vyzva, strlen(vyzva) + 1);
-                n = read(newsockfd, buffer, 255);
-                char heslo[20];
-                bzero(heslo, 20);
-                strcpy(heslo, buffer);
-                logged = login(meno, heslo);
-                if (logged == 0) {
+            action = atoi(buffer);
+            switch(action) {
+                case 1:
                     bzero(vyzva, 50);
-                    strcpy(vyzva, "Uzivatel nenajdeny: ");
+                    strcpy(vyzva, "Meno: ");
                     n = write(newsockfd, vyzva, strlen(vyzva) + 1);
-                } else {
+                    bzero(buffer, 256);
+                    n = read(newsockfd, buffer, 255);
+                    bzero(meno, 20);
+                    strcpy(meno, buffer);
+                    strcpy(username, buffer);
+                    bzero(buffer, 256);
                     bzero(vyzva, 50);
-                    strcpy(vyzva, "Vitaj ");
-                    strcat(vyzva, meno);
+                    strcpy(vyzva, "Heslo: ");
                     n = write(newsockfd, vyzva, strlen(vyzva) + 1);
-                }
-            } else if (strncmp("2", buffer, 1) == 0) {
-                bzero(vyzva, 50);
-                strcpy(vyzva, "Zadajte meno: ");
-                n = write(newsockfd, vyzva, strlen(vyzva) + 1);
-                bzero(buffer, 256);
-                n = read(newsockfd, buffer, 255);
-                char meno[20];
-                bzero(meno, 20);
-                strcpy(meno, buffer);
-                strcpy(username, buffer);
-                int a = 10;
-                bzero(buffer, 256);
-                bzero(vyzva, 50);
-                strcpy(vyzva, "Zadajte heslo: ");
-                n = write(newsockfd, vyzva, strlen(vyzva) + 1);
-                n = read(newsockfd, buffer, 255);
-                char heslo[20];
-                bzero(heslo, 20);
-                strcpy(heslo, buffer);
-                bzero(vyzva,50);
-                if (checkName(meno) == 0) {
-                    addUser(meno, heslo);
+                    n = read(newsockfd, buffer, 255);
+                    bzero(heslo, 20);
+                    strcpy(heslo, buffer);
                     logged = login(meno, heslo);
-                    strcpy(vyzva, "Vitaj ");
-                    strcat(vyzva, meno);
+                    if (logged == 0) {
+                        bzero(vyzva, 50);
+                        strcpy(vyzva, "Uzivatel nenajdeny: ");
+                        n = write(newsockfd, vyzva, strlen(vyzva) + 1);
+                    } else {
+                        bzero(vyzva, 50);
+                        strcpy(vyzva, "Vitaj ");
+                        strcat(vyzva, meno);
+                        n = write(newsockfd, vyzva, strlen(vyzva) + 1);
+                    }
+                    break;
+                case 2:
+                    bzero(vyzva, 50);
+                    strcpy(vyzva, "Zadajte meno: ");
                     n = write(newsockfd, vyzva, strlen(vyzva) + 1);
-                } else {
-                    strcpy(vyzva, "Uzivatel s takým meno už existuje :(");
+                    bzero(buffer, 256);
+                    n = read(newsockfd, buffer, 255);
+                    bzero(meno, 20);
+                    strcpy(meno, buffer);
+                    strcpy(username, buffer);
+                    bzero(buffer, 256);
+                    bzero(vyzva, 50);
+                    strcpy(vyzva, "Zadajte heslo: ");
                     n = write(newsockfd, vyzva, strlen(vyzva) + 1);
-                }
+                    n = read(newsockfd, buffer, 255);
+                    bzero(heslo, 20);
+                    strcpy(heslo, buffer);
+                    bzero(vyzva,50);
+                    if (checkName(meno) == 0) {
+                        addUser(meno, heslo);
+                        logged = login(meno, heslo);
+                        strcpy(vyzva, "Vitaj ");
+                        strcat(vyzva, meno);
+                        n = write(newsockfd, vyzva, strlen(vyzva) + 1);
+                    } else {
+                        strcpy(vyzva, "Uzivatel s takým meno už existuje :(");
+                        n = write(newsockfd, vyzva, strlen(vyzva) + 1);
+                    }
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -944,18 +947,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-
-/*  case 12:
-      getContacts(username, newsockfd);
-      n = read(newsockfd, buffer, 255);
-      if(strncmp(buffer, "0", 1)!=0) {
-          uploadFile(username, buffer, newsockfd);
-      }
-      break;*/
-
-/*case 22:
-    bzero(buffer, 256);
-    n = read(newsockfd, buffer, 255);
-    printf("dostal som meno suboru");
-    uploadfile(buffer, newsockfd);
-    break;*/
