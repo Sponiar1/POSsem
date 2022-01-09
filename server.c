@@ -8,7 +8,7 @@
 #include <pthread.h>
 #include "server.h"
 pthread_mutex_t mutex;
-
+//
 int login(char meno[], char heslo[]) {
     int found;
     found = 0;
