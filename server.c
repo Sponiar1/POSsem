@@ -7,43 +7,7 @@
 #include <unistd.h>
 #include <pthread.h>
 //zmena
-int uploadFile(char meno[], char kontaktovany[], int newsockfd) {
-    int n, maxFileSize;
-    FILE *f;
-    char path[512];
-    char fileName[50];
-    char data[maxFileSize];
-    bzero(path, 512);
-    bzero(data, maxFileSize);
-    maxFileSize = 5*1024*1024;
-    strcpy(path, "Daj meno suboru");
-    n = write(newsockfd, path, strlen(path));
-    strcpy(path, "/tmp/PosSemTest/clientFiles/");
-    while (n == 0)
-    {
-        n = read(newsockfd, fileName, strlen(fileName));
-    }
-    if (strncmp(fileName, "Error", 5) == 0) {
-        return 1;
-    }
-    strcat(path, fileName);
-    f = fopen(path, "w+");
-    while (1==1) {
-        bzero(data, maxFileSize);
-        n = read(newsockfd, data, strlen(data));
-        if(strncmp(data, "Done", 4) != 0) {
-            fprintf(f, "%s", data);
-        } else {
-            break;
-        }
-    }
-    fclose(f);
-    meno[strcspn(meno, "\n")] = 0;
-    kontaktovany[strcspn(kontaktovany, "\n")] = 0;
-    f = fopen("/tmp/PosSemTest/filesToSend", "a");
-    fprintf(f, "%s %s %s", meno, kontaktovany, fileName);
-    fclose(f);
-}
+
 
 int login(char meno[], char heslo[]) {
     int found;
@@ -805,13 +769,6 @@ void *userInteraction(int newsockfd) {
                 case 11:
                     logged = 0;
                     on = 0;
-                    break;
-                case 12:
-                    getContacts(username, newsockfd);
-                    n = read(newsockfd, buffer, 255);
-                    if(strncmp(buffer, "0", 1)!=0) {
-                        uploadFile(username, buffer, newsockfd);
-                    }
                     break;
                 default:
                     break;
