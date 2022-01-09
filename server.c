@@ -8,67 +8,7 @@
 #include <pthread.h>
 #include "server.h"
 pthread_mutex_t mutex;
-/*
-void uploadfile(char name[], int newsockfd) {
-    int n;
-    FILE *f;
-    name[strcspn(name, "\n")] = 0;
-    char data[1024] = {0};
-    char path[512] = {0};
-    strcpy(path, "/tmp/PosSemTest/clientFiles/");
-    strcat(path, name);
-    f = fopen(name, "w+");
-    if(f==NULL) {
-        perror("Error creating file");
-    }
-    while(1) {
-        n = recv(newsockfd, data, 1024, 0);
-        if(strncmp(data, "END OF FILE", 11)==0) {
-            break;
-        }
-        fprintf(f, "%s", data);
-        bzero(data, 1024);
-    }
-    fclose(f);
-}
-*/
-/*
-int uploadFile(char meno[], char kontaktovany[], int newsockfd) {
-    int n, maxFileSize;
-    FILE *f;
-    char path[512];
-    char fileName[20];
-    char data[maxFileSize];
-    bzero(path, 512);
-    bzero(data, maxFileSize);
-    maxFileSize = 5*1024*1024;
-    strcpy(path, "Daj meno suboru");
-    n = write(newsockfd, path, strlen(path));w
-    strcpy(path, "/tmp/PosSemTest/clientFiles/");
 
-    n = read(newsockfd, fileName, strlen(fileName));
-    if (strncmp(fileName, "Error", 5) == 0) {
-        return 1;
-    }
-    strcat(path, fileName);
-    f = fopen(path, "w+");
-    while (1==1) {
-        bzero(data, maxFileSize);
-        n = read(newsockfd, data, strlen(data));
-        if(strncmp(data, "Done", 4) != 0) {
-            fprintf(f, "%s", data);
-        } else {
-            break;
-        }
-    }
-    fclose(f);
-    meno[strcspn(meno, "\n")] = 0;
-    kontaktovany[strcspn(kontaktovany, "\n")] = 0;
-    f = fopen("/tmp/PosSemTest/filesToSend", "a");
-    fprintf(f, "%s %s %s", meno, kontaktovany, fileName);
-    fclose(f);
-}
-*/
 int login(char meno[], char heslo[]) {
     int found;
     found = 0;
